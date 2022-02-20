@@ -105,7 +105,7 @@ namespace MarrowVale.Business.Services
             throw new NotImplementedException();
         }
 
-        public string TraversePath(Player player, Location location)
+        public MarrowValeMessage TraversePath(Command command, Player player)
         {
             throw new NotImplementedException();
         }

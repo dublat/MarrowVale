@@ -10,7 +10,6 @@ namespace MarrowVale.Business.Contracts
 {
     public interface ICommandProcessingService
     {
-        public string ShowWorld( Player player);
-        string ProcessCommand(Command command, Player player);
+        public void ProcessCommand(Command command, Player player);
     }
 }

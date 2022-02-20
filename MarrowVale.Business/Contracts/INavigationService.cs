@@ -9,7 +9,7 @@ namespace MarrowVale.Business.Contracts
         public bool IsPathValid(Location playerLocation, Location destination);
         public MarrowValeMessage Enter(Command command, Player player);
         public MarrowValeMessage Exit(Command command, Player player);
-        public string TraversePath(Player player, Location location);
+        public MarrowValeMessage TraversePath(Command command, Player player);
         public string ExitBuilding(Player player);
         public string ClimbUp(Player player, Location location);
         public string ClimbDown(Player player, Location location);

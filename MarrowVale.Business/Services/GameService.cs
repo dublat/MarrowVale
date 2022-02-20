@@ -1,5 +1,7 @@
 ﻿using MarrowVale.Business.Contracts;
+using MarrowVale.Business.Entities.Commands;
 using MarrowVale.Business.Entities.Entities;
+using MarrowVale.Business.Entities.Enums;
 using MarrowVale.Common.Contracts;
 using MarrowVale.Data.Contracts;
 using Microsoft.Extensions.Logging;
@@ -49,7 +51,9 @@ namespace MarrowVale.Business.Services
         public void Start()
         {
             Console.Clear();
-            _printService.Type(_commandProccesingService.ShowWorld(Player));
+            var lookAround = new Command { Type = CommandEnum.LookAround };
+            _commandProccesingService.ProcessCommand(lookAround, Player);
+
             while (true)
             {
                 var playerInput = _printService.ReadInput();
@@ -57,7 +61,7 @@ namespace MarrowVale.Business.Services
                     break;
 
                 var command = _inputProcessingService.ProcessInput(playerInput, "", Player);
-                _printService.Type(_commandProccesingService.ProcessCommand(command, Player));
+                _commandProccesingService.ProcessCommand(command, Player);
 
             }
         }

@@ -19,10 +19,11 @@ namespace MarrowVale.Business.Services
         private readonly ICombatService _combatService;
         private readonly IDivineInterventionService _divineInterventionService;
         private readonly IPrintService _printService;
+        private readonly INavigationService _navigationService;
 
         public CommandProcessingService(IWorldContextService worldContextService, IPlayerRepository playerRepository, IDialogueService dialogueService,
                                         INpcRepository npcRepository, ILocationRepository locationRepository, ICombatService combatService, IDivineInterventionService divineInterventionService,
-                                        IPrintService printService)
+                                        IPrintService printService, INavigationService navigationService)
         {
             _worldContextService = worldContextService;
             _playerRepository = playerRepository;
@@ -32,122 +33,75 @@ namespace MarrowVale.Business.Services
             _combatService = combatService;
             _divineInterventionService = divineInterventionService;
             _printService = printService;
+            _navigationService = navigationService;
         }
 
-        public string ShowWorld(Player player)
+
+        public void ProcessCommand(Command command, Player player)
         {
-            var currentLocationType = _playerRepository.PlayerLocationType(player);
-            var currentLocation = _playerRepository.GetPlayerLocation(player);
-            if (currentLocationType.Contains("Road"))
+            do
             {
-                return _worldContextService.GenerateRoadFlavorText(currentLocation);
+                var message = ProcessCommandMap(command, player);
+                if (!string.IsNullOrWhiteSpace(message.ResultText)) 
+                    _printService.Type(message.ResultText);
+                else if (!string.IsNullOrWhiteSpace(message.ErrorText))
+                    _divineInterventionService.HandleError(command.Input, error: message.ErrorText);
+
+                command = message.NextCommand;
             }
-            else if (currentLocationType.Contains("Building"))
-            {
-                return _worldContextService.GenerateBuildingFlavorText(currentLocation);
-            }
-            else if (currentLocationType.Contains("Room"))
-            {
-                return _worldContextService.GenerateRoomFlavorText(currentLocation);
-            }
-            return "Error";
+            while (command != null);
+
+
         }
 
 
-
-        public string ProcessCommand(Command command, Player player) =>
+        private MarrowValeMessage ProcessCommandMap(Command command, Player player) =>
             command?.Type switch
             {
-                CommandEnum.Enter => Enter(command, player),
-                CommandEnum.Traverse => TraverseRoad(command, player),
+                CommandEnum.Enter => _navigationService.Enter(command, player),
+                CommandEnum.Traverse => _navigationService.TraversePath(command, player),
                 CommandEnum.Speak => speak(command, player),
                 CommandEnum.Inventory => inspectInventory(player),
                 CommandEnum.Health => inspectHealth(player),
                 CommandEnum.Attack => attack(command, player),
-                CommandEnum.Exit => ExitBuilding(command, player),
-                _ => "Command Is Not Mapped to a function",
+                CommandEnum.Exit => _navigationService.Exit(command, player),
+                CommandEnum.LookAround => _navigationService.CurrentLocationDescription(player),
+                _ => new MarrowValeMessage { ErrorText = "Command Is Not Mapped to a function" }
             };
 
 
-        private string speak(Command command, Player player)
+        private MarrowValeMessage speak(Command command, Player player)
         {
+            var message = new MarrowValeMessage();
             var npc = _npcRepository.Single(x => x.Id == command.DirectObjectNode.Id).Result;
             if (isAbleToSpeakWith(player, npc))
             {
                 _dialogueService.Talk(player, npc);
+                message.ResultText = "Conversation Over";
             }
             else
             {
-                var error = _divineInterventionService.HandleError(command.Input, $"Unable to speak with character {npc?.FullName ?? command?.DirectObjectNode?.Name}");
-                _printService.PrintDivineText(error);
-                return "";
+                message.ErrorText = $"Unable to speak with character {npc?.FullName ?? command?.DirectObjectNode?.Name}";
             }
 
-            return "Conversation Over.";
+            return message;
         }
 
-        private string Enter(Command command, Player player)
-        {
-            var goToLocation = _locationRepository.GetById(command.DirectObjectNode.Id).Result;
-            if (isValidPath(player, goToLocation))
-            {
-                //_locationRepository.GetLocation(command.DirectObjectId);
-                Location enteredLocation;
 
-                if (command.DirectObjectNode.Labels.Contains("Building"))
-                    enteredLocation = _locationRepository.GetBuildingEntrance(command.DirectObjectNode.Id);
-                else
-                    enteredLocation = _locationRepository.Single(x => x.Id == command.DirectObjectNode.Id).Result;
-                var currentLocation = _playerRepository.GetPlayerLocation(player);
-                _playerRepository.MovePlayer(player, currentLocation.Id, enteredLocation.Id);
-                return _worldContextService.GenerateRoomFlavorText(enteredLocation);
-            }
-            else
-            {
-                var error = _divineInterventionService.HandleError(command.Input, $"Unable to navigate the following path to {goToLocation?.Name ?? command?.DirectObjectNode?.Name}");
-                _printService.PrintDivineText(error);
-                return "";
-            }
 
-            
-        }
+        //private MarrowValeMessage TraverseRoad(Command command, Player player)
+        //{
+        //    //if (isValidPath(player, null))
+        //    //{
+        //    //    var currentLocation = _playerRepository.GetPlayerLocation(player);
+        //    //    _playerRepository.MovePlayer(player, currentLocation.Item2, command.DirectObjectName);
 
-        private string ExitBuilding(Command command, Player player)
-        {
-            var exit = _locationRepository.GetBuildingExit(command.DirectObjectNode.Id);
-            if (isValidPath(player, exit))
-            {
-                var currentLocation = _playerRepository.GetPlayerLocation(player);
-                _playerRepository.MovePlayer(player, currentLocation.Id, exit.Id);
-                return ShowWorld(player);
-            }
-            else
-            {
-                var error = _divineInterventionService.HandleError(command.Input, $"Unable to exit building {exit?.Name ?? command?.DirectObjectNode?.Name}");
-                _printService.PrintDivineText(error);
-                return "";
-            }
-        }
+        //    //    var building = new Building { Name = command.DirectObjectName };
+        //    //    return _worldContextService.GenerateFlavorText(building);
+        //    //}
 
-        private string TraverseRoad(Command command, Player player)
-        {
-            //if (isValidPath(player, null))
-            //{
-            //    var currentLocation = _playerRepository.GetPlayerLocation(player);
-            //    _playerRepository.MovePlayer(player, currentLocation.Item2, command.DirectObjectName);
-
-            //    var building = new Building { Name = command.DirectObjectName };
-            //    return _worldContextService.GenerateFlavorText(building);
-            //}
-
-            return "Invalid Path";
-        }
-
-        private bool isValidPath(Player player, Location location)
-        {
-            var currentLocation = _playerRepository.GetPlayerLocation(player);
-            return _locationRepository.IsPathConnected(currentLocation, location);
-        }
+        //    return "Invalid Path";
+        //}
 
         private bool isAbleToSpeakWith(Player player, Npc npc)
         {
@@ -158,38 +112,46 @@ namespace MarrowVale.Business.Services
             return _npcRepository.IsPlayerNearby(player, npc);
         }
 
-        private string inspectInventory(Player player)
+        private MarrowValeMessage inspectInventory(Player player)
         {
+            var message = new MarrowValeMessage();
+
             var inventory = _playerRepository.GetInventory(player);
             foreach (var item in inventory.Items)
             {
                 Console.WriteLine(item.GetShortDescription());
             }
 
-            return $"{player.Name}'s capicity is";
+            message.ResultText = $"{player.Name}'s capicity is";
+            return message;
         }
 
-        private string inspectHealth(Player p)
+        private MarrowValeMessage inspectHealth(Player p)
         {
+            var message = new MarrowValeMessage();
             var player = _playerRepository.GetById(p.Id).Result;
-            return $"You are at {player.CurrentHealth}/{player.MaxHealth} health"; 
+            message.ResultText = $"You are at {player.CurrentHealth}/{player.MaxHealth} health";
+
+            return message;
         }
 
-        private string attack(Command command, Player player)
+        private MarrowValeMessage attack(Command command, Player player)
         {
+            var message = new MarrowValeMessage();
+
             var npc = _npcRepository.GetById(command.DirectObjectNode.Id).Result;
             _npcRepository.SetCombatEquipment(npc);
 
             if (isAbleToAttack(player, npc))
             {
-                return _combatService.Attack(player, npc);
+                message.ResultText = _combatService.Attack(player, npc);
             }
             else
             {
-                var error =_divineInterventionService.HandleError(command.Input, $"Unable to attack character {player?.Name ?? command?.DirectObjectNode?.Name}");
-                _printService.PrintDivineText(error);
-                return "";
+                message.ErrorText = _divineInterventionService.HandleError(command.Input, $"Unable to attack character {player?.Name ?? command?.DirectObjectNode?.Name}");
             }
+
+            return message;
         }
 
     }
