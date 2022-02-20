@@ -111,7 +111,8 @@ namespace MarrowVale
                 .AddTransient<INpcActionService, NpcActionService>()
                 .AddTransient<IDivineInterventionService, DivineInterventionService>()
                 .AddTransient<IAiService, AiService>()
-                .AddTransient<IAiEvaluationService, AiEvaluationService>();
+                .AddTransient<IAiEvaluationService, AiEvaluationService>()
+                .AddTransient<INavigationService, NavigationService>();
         }
 
         private static void ConfigureRepositories(IServiceCollection services)

@@ -10,6 +10,7 @@ namespace MarrowVale.Business.Entities.Enums
     {
         Inventory,
         MoveToward,
+        LookAround,
         Traverse,
         Enter,
         Exit,

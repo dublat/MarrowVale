@@ -13,9 +13,6 @@ namespace MarrowVale.Business.Contracts
         public GraphNode GetObjectLabelIdPair(string searchObject, Player owner, string input);
         public T DirectObjectCommand<T>(string input, string context, GraphNode owner, CommandEnum command) where T : GraphNode;
         public void AttachToContext(string label, string id, Object entity);
-        public string GenerateRoadFlavorText(Location road);
-        public string GenerateBuildingFlavorText(Location building);
-        public string GenerateRoomFlavorText(Location building);
         public string DescribeConnectedPaths(Player player);
         public GraphNode ContextSearch(string searchTerm, string conversation);
         public GraphNode ContextSearch(string searchTerm, GraphNode characterKnowledge);
