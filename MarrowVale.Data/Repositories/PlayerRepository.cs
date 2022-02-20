@@ -1,4 +1,5 @@
 ﻿using MarrowVale.Business.Entities.Entities;
+using MarrowVale.Common.Constants;
 using MarrowVale.Common.Contracts;
 using MarrowVale.Data.Contracts;
 using Microsoft.Extensions.Logging;
@@ -23,9 +24,9 @@ namespace MarrowVale.Data.Repositories
         public async Task CreatePlayer(Player player)
         {
             await Add(player);
-            await AddAndRelate(x => x.Id == player.Id, player.Inventory, new GraphRelationship("OWNS"));
-            await AddAndRelate(x => x.Id == player.Id, player.CurrentWeapon, new GraphRelationship("EQUIPPED"));
-            await AddAndRelate(x => x.Id == player.Id, player.CurrentArmor, new GraphRelationship("EQUIPPED"));
+            await AddAndRelate(x => x.Id == player.Id, player.Inventory, new GraphRelationship(Relationships.Own));
+            await AddAndRelate(x => x.Id == player.Id, player.CurrentWeapon, new GraphRelationship(Relationships.Equipped));
+            await AddAndRelate(x => x.Id == player.Id, player.CurrentArmor, new GraphRelationship(Relationships.Equipped));
 
             foreach (var playerItem in player.Inventory.Items)
             {
@@ -43,7 +44,7 @@ namespace MarrowVale.Data.Repositories
                 .ResultsAsync.Result.FirstOrDefault();
 
 
-            await Relate<Road, GraphRelationship>(x => x.Id == player.Id, y => y.Id == startingRoad.Id, new GraphRelationship("AT"));
+            await Relate<Road, GraphRelationship>(x => x.Id == player.Id, y => y.Id == startingRoad.Id, new GraphRelationship(Relationships.At));
         }
 
         public IList<string> PlayerLocationType(Player player)
@@ -59,14 +60,19 @@ namespace MarrowVale.Data.Repositories
 
         public Location GetPlayerLocation(Player player)
         {
-            return RelatedTo<Location, GraphRelationship>(x => x.Id == player.Id, y => true, new GraphRelationship("AT")).ResultsAsync.Result.FirstOrDefault();
+            var at = new GraphRelationship(Relationships.At);
+            return RelatedTo<Location, GraphRelationship>(x => x.Id == player.Id, y => true, at).ResultsAsync.Result.FirstOrDefault();
         }
 
         public Player GetPlayerWithInventory(string playerId)
         {
             var player = GetById(playerId).Result;
-            player.Inventory = RelatedTo<Inventory, GraphRelationship>(x => x.Id == playerId, y => true, new GraphRelationship("OWNS")).ResultsAsync.Result.FirstOrDefault();
-            player.CurrentWeapon = RelatedTo<Weapon, GraphRelationship>(x => x.Id == playerId, y => true, new GraphRelationship("EQUIPPED")).ResultsAsync.Result.FirstOrDefault();
+
+            var own = new GraphRelationship(Relationships.Own);
+            player.Inventory = RelatedTo<Inventory, GraphRelationship>(x => x.Id == playerId, y => true, own).ResultsAsync.Result.FirstOrDefault();
+
+            var equipped = new GraphRelationship(Relationships.Equipped);
+            player.CurrentWeapon = RelatedTo<Weapon, GraphRelationship>(x => x.Id == playerId, y => true, equipped).ResultsAsync.Result.FirstOrDefault();
             return player;
 
         }
