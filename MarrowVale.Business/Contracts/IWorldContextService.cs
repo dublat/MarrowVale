@@ -15,7 +15,6 @@ namespace MarrowVale.Business.Contracts
         public void AttachToContext(string label, string id, Object entity);
         public string GenerateRoadFlavorText(Location road);
         public string GenerateBuildingFlavorText(Location building);
-        public string GenerateRoomFlavorText(Location building);
         public string DescribeConnectedPaths(Player player);
         public GraphNode ContextSearch(string searchTerm, string conversation);
         public GraphNode ContextSearch(string searchTerm, GraphNode characterKnowledge);
