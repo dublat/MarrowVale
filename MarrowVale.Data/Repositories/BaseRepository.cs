@@ -50,7 +50,7 @@ namespace MarrowVale.Data.Repositories
             Expression<Func<T, bool>> newQuery = PredicateRewriter.Rewrite(query, "e");
 
             return await _graphClient.Cypher
-                .Match("(e:" + entity.FormattedLabels() + ")")
+               .Match($"(e:{entity.EntityLabel})")
                 .Where(newQuery)
                 .Return(e => e.As<T>())
                 .ResultsAsync;
@@ -78,7 +78,7 @@ namespace MarrowVale.Data.Repositories
             this.CopyValues(itemToUpdate, newItem);
 
             await _graphClient.Cypher
-               .Match("(" + name + ":" + newItem.EntityLabel + ")")
+               .Match($"({name}:{newItem.EntityLabel})")
                .Where((T x) => x.Id == newItem.Id)
                .Set(name + " = $item")
                .WithParam("item", itemToUpdate)
@@ -93,22 +93,10 @@ namespace MarrowVale.Data.Repositories
             this.CopyValues(itemToUpdate, newItem);
 
             await _graphClient.Cypher
-               .Match("(" + name + ":" + newItem.EntityLabel + ")")
+               .Match($"({name}:{newItem.EntityLabel})")
                .Where(query)
                .Set(name + " = $item")
                .WithParam("item", itemToUpdate)
-               .ExecuteWithoutResultsAsync();
-        }
-
-        public virtual async Task Patch(Expression<Func<T, bool>> query, T item)
-        {
-            string name = query.Parameters[0].Name;
-
-            await _graphClient.Cypher
-               .Match("(" + name + ":" + item.FormattedLabels() + ")")
-               .Where(query)
-               .Set(name + " = {item}")
-               .WithParam("item", item)
                .ExecuteWithoutResultsAsync();
         }
 
@@ -132,7 +120,7 @@ namespace MarrowVale.Data.Repositories
             T entity = (T)Activator.CreateInstance(query.Parameters[0].Type);
 
             await _graphClient.Cypher
-                .Match("(" + name + ":" + entity.FormattedLabels() + ")")
+                .Match($"({name}:{entity.EntityLabel})")
                 .Where(query)
                 .Delete(name)
                 .ExecuteWithoutResultsAsync();
@@ -307,6 +295,12 @@ namespace MarrowVale.Data.Repositories
                 .AndWhere(query2)
                 .Delete("r")
                 .ExecuteWithoutResultsAsync();
+        }
+
+
+        public GraphRelationship BuildRelationship(string relationship, int length)
+        {
+            return new GraphRelationship($"{relationship}* ..{length}");
         }
 
 
