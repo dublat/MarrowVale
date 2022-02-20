@@ -79,6 +79,25 @@ namespace MarrowVale.Business.Services
             return message;
         }
 
+        public MarrowValeMessage TraversePath(Command command, Player player)
+        {
+            var message = new MarrowValeMessage();
+            var playerLocation = _playerRepository.GetPlayerLocation(player);
+            var endLocation = pathDestination(command);
+
+            if (IsPathValid(playerLocation, endLocation))
+            {
+                _playerRepository.MovePlayer(player, playerLocation.Id, endLocation.Id);
+                message.ResultText = generateRoadFlavorText(endLocation);
+            }
+            else
+            {
+                message.ErrorText = $"Unable to traverse road {endLocation?.Name ?? command?.DirectObjectNode?.Name}";
+            }
+
+            return message;
+        }
+
 
         public string ClimbDown(Player player, Location location)
         {
@@ -105,11 +124,6 @@ namespace MarrowVale.Business.Services
             throw new NotImplementedException();
         }
 
-        public MarrowValeMessage TraversePath(Command command, Player player)
-        {
-            throw new NotImplementedException();
-        }
-
 
         public Room enterDestination(Command command)
         {
@@ -125,12 +139,19 @@ namespace MarrowVale.Business.Services
         public Location exitDestination(Command command)
         {
             var destinationId = command.DirectObjectNode.Id;
-            var roadEntity = "Road";
+            var buildingEntity = "Building";
 
-            if (command.DirectObjectNode.Labels.Contains(roadEntity))
+            if (command.DirectObjectNode.Labels.Contains(buildingEntity))
             return _locationRepository.GetBuildingExit(command.DirectObjectNode.Id);
             else
                 return _locationRepository.Single(x => x.Id == destinationId).Result;
+        }
+
+
+        public Location pathDestination(Command command)
+        {
+            var destinationId = command.DirectObjectNode.Id;
+            return _locationRepository.Single(x => x.Id == destinationId).Result;
         }
 
 

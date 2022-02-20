@@ -88,21 +88,6 @@ namespace MarrowVale.Business.Services
         }
 
 
-
-        //private MarrowValeMessage TraverseRoad(Command command, Player player)
-        //{
-        //    //if (isValidPath(player, null))
-        //    //{
-        //    //    var currentLocation = _playerRepository.GetPlayerLocation(player);
-        //    //    _playerRepository.MovePlayer(player, currentLocation.Item2, command.DirectObjectName);
-
-        //    //    var building = new Building { Name = command.DirectObjectName };
-        //    //    return _worldContextService.GenerateFlavorText(building);
-        //    //}
-
-        //    return "Invalid Path";
-        //}
-
         private bool isAbleToSpeakWith(Player player, Npc npc)
         {
             return _npcRepository.IsPlayerNearby(player, npc);
