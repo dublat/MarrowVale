@@ -13,5 +13,6 @@ namespace MarrowVale.Common.Constants
         public static readonly string Equipped = "EQUIPPED";
         public static readonly string Own = "OWN";
         public static readonly string Path = "PATH";
+        public static readonly string Connects = "CONNECTS";
     }
 }
