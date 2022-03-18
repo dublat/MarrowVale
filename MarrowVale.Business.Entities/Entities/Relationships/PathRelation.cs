@@ -11,11 +11,13 @@ namespace MarrowVale.Business.Entities.Entities.Relationships
     {
         public PathRelation() : base(RelationshipConstants.Path) {}
 
-        public bool IsObstructed { get; set; }
+        public bool? IsObstructed { get; set; }
 
-        public override string ToString()
+        public override string FormatProperties()
         {
-            return $"{PrimaryLabel}* ..{PathLength} {{IsObstructed: {IsObstructed}}}";
+            if (IsObstructed is not null)
+                return $"{{IsObstructed: {IsObstructed}}}";
+            return "";
         }
     }
 }

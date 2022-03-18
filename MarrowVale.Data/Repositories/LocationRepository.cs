@@ -49,7 +49,7 @@ namespace MarrowVale.Data.Repositories
 
         public List<Room> GetConnectingRooms(Location location)
         {
-            var path = new PathRelation { IsObstructed = false };
+            var path = new PathRelation { IsObstructed = false, IsDirectedOut = true };
             return RelatedTo<Room, GraphRelationship>(x => x.Id == location.Id, y => true, path).ResultsAsync.Result.ToList();
         }
 

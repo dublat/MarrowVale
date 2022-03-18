@@ -47,7 +47,7 @@ namespace MarrowVale.Business.Entities.Entities
             }
 
             if (PathLength == 1)
-                return PrimaryLabel;
+                return $"{left}[{Alias}:{PrimaryLabel} {FormatProperties()}]{right}";
 
             return $"{left}[{Alias}:{PrimaryLabel}* ..{PathLength} {FormatProperties()}]{right}";
         }
