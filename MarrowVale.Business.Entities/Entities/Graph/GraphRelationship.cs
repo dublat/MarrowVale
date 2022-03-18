@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 
 namespace MarrowVale.Business.Entities.Entities
@@ -7,7 +8,8 @@ namespace MarrowVale.Business.Entities.Entities
     {
         public GraphRelationship()
         {
-            Labels = new List<string>();            
+            Labels = new List<string>();
+            Id = Guid.NewGuid().ToString();
         }
         public GraphRelationship(string name, int pathLength = 1, bool? isDirectedOut = null) : this()
         {
@@ -15,6 +17,8 @@ namespace MarrowVale.Business.Entities.Entities
             PathLength = pathLength;
             IsDirectedOut = isDirectedOut;
         }
+
+        public string Id { get; set; }
         [JsonIgnore]
         public bool? IsDirectedOut { get; set; }
         [JsonIgnore]

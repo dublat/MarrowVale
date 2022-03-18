@@ -354,18 +354,15 @@ namespace MarrowVale.Data.Repositories
 
 
 
-
-
-
-
-
-        public virtual async Task DeleteRelationshipById<TRelationship>(T entity, TRelationship relationship)
-        where TRelationship : GraphRelationship, new()
+        public virtual async Task DeleteRelationshipById(T baseEntity, GraphRelationship relationship)
         {
+            Expression<Func<T, bool>> getById = (T y) => y.Id == baseEntity.Id;
+            getById = PredicateRewriter.Rewrite(getById, baseEntity.Alias);
+
             var query = _graphClient.Cypher
-                .Match($"(){relationship.ToString()}(x)")
-                .Where((T x) => x.Id == entity.Id)
-                .Delete("r");
+                .Match($"(){relationship.ToString()}({baseEntity.Alias})")
+                .Where(getById)
+                .Delete(relationship.Alias);
 
             await query.ExecuteWithoutResultsAsync();
         }
