@@ -1,4 +1,5 @@
 ﻿using MarrowVale.Business.Entities.Entities;
+using MarrowVale.Business.Entities.Entities.Relationships;
 using MarrowVale.Common.Constants;
 using MarrowVale.Data.Contracts;
 using Microsoft.Extensions.Logging;
@@ -18,46 +19,51 @@ namespace MarrowVale.Data.Repositories
         }
         public Room GetBuildingEntrance(string buildingId)
         {
-            var path = new GraphRelationship(Relationships.Path);
+            var path = new PathRelation { IsObstructed = false };
             return RelatedTo<Room, GraphRelationship>(x => x.Id == buildingId, y => true, path).ResultsAsync.Result.FirstOrDefault();
         }
 
         public Road GetBuildingExit(string buildingId)
         {
-            var path = new GraphRelationship(Relationships.Path);
+            var path = new PathRelation { IsObstructed = false };
             return RelatedTo<Road, GraphRelationship>(x => x.Id == buildingId, y => true, path).ResultsAsync.Result.FirstOrDefault();
         }
 
         public List<Building> GetNearbyBuildings(Location location)
         {
-            var path = new GraphRelationship(Relationships.Path);
+            var path = new PathRelation { IsObstructed = false };
             return RelatedTo<Building, GraphRelationship>(x => x.Id == location.Id, y => true, path).ResultsAsync.Result.ToList();
         }
 
         public List<Road> GetNearbyRoads(Location location)
         {
-            var path = new GraphRelationship(Relationships.Path);
+            var path = new PathRelation { IsObstructed = false };
             return RelatedTo<Road, GraphRelationship>(x => x.Id == location.Id, y => true, path).ResultsAsync.Result.ToList();
         }
 
         public List<Npc> GetNpcsAtLocation(Location location)
         {
-            var inside = new GraphRelationship(Relationships.Inside);
+            var inside = new GraphRelationship(RelationshipConstants.Inside);
             return RelatedTo<Npc,GraphRelationship>(x => x.Id == location.Id,y=> true, inside, false).ResultsAsync.Result.ToList();
         }
 
         public List<Room> GetConnectingRooms(Location location)
         {
-            var path = new GraphRelationship(Relationships.Path);
+            var path = new PathRelation { IsObstructed = false };
             return RelatedTo<Room, GraphRelationship>(x => x.Id == location.Id, y => true, path).ResultsAsync.Result.ToList();
         }
 
         public bool IsPathConnected(Location location, Location location2)
         {
-            var pathLength = 2;
-            var path = BuildRelationship(Relationships.Path, pathLength);
+            var path = new PathRelation { IsObstructed = false, PathLength = 2 };
             return RelatedTo<Location, GraphRelationship>(x => x.Id == location.Id, y => y.Id == location2.Id, path).ResultsAsync.Result.Any();
         }
 
+        public bool IsItemAtLocation(Location location, Item item)
+        {
+            var at = new AtRelation();
+            var preQuery = fromCategory("Item");
+            return RelatedTo<Item, GraphRelationship>(x => x.Id == location.Id, y => y.Id == item.Id, at, false, preQuery: preQuery).ResultsAsync.Result.Any();
+        }
     }
 }

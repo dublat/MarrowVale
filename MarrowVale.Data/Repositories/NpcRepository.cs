@@ -31,7 +31,7 @@ namespace MarrowVale.Data.Repositories
             if (npc == null || player == null)
                 return false;
 
-            return RelatedToAndFrom<Room, Player, GraphRelationship>(x => x.Id == npc.Id, z => true, y => y.Id == player.Id, new GraphRelationship(Relationships.Inside), new GraphRelationship(Relationships.At), relation2Out: false).ResultsAsync.Result.Any();
+            return RelatedToAndFrom<Room, Player, GraphRelationship>(x => x.Id == npc.Id, z => true, y => y.Id == player.Id, new GraphRelationship(RelationshipConstants.Inside), new GraphRelationship(RelationshipConstants.At), relation2Out: false).ResultsAsync.Result.Any();
 
         }
 
@@ -151,14 +151,14 @@ namespace MarrowVale.Data.Repositories
 
         public void SetCombatEquipment(Npc npc)
         {
-            var equipped = new GraphRelationship(Relationships.Equipped);
+            var equipped = new GraphRelationship(RelationshipConstants.Equipped);
             npc.Armor = RelatedTo<Armor, GraphRelationship>(x => x.Id == npc.Id, y => true, equipped).ResultsAsync.Result.FirstOrDefault();
             npc.Weapon = RelatedTo<Weapon, GraphRelationship>(x => x.Id == npc.Id, y => true, equipped).ResultsAsync.Result.FirstOrDefault();
         }
 
         public async void SaveCombatEquipment(Npc npc)
         {
-            var equipped = new GraphRelationship(Relationships.Equipped);
+            var equipped = new GraphRelationship(RelationshipConstants.Equipped);
             if (npc.Armor != null)
                 await AddAndRelate(x => x.Id == npc.Id, npc.Armor, equipped);
             if (npc.Weapon != null)

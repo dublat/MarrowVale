@@ -64,6 +64,7 @@ namespace MarrowVale.Business.Services
                 CommandEnum.Swim => throw new NotImplementedException(),
                 CommandEnum.Dance => throw new NotImplementedException(),
                 CommandEnum.Give => throw new NotImplementedException(),
+                CommandEnum.Take => directObjectCommand(input, context, player, command),
                 CommandEnum.Equip => throw new NotImplementedException(),
                 CommandEnum.Use => throw new NotImplementedException(),
                 CommandEnum.Cast => throw new NotImplementedException(),

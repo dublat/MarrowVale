@@ -79,14 +79,7 @@ namespace MarrowVale.Business.Services
             _printService.Type("Enter the name of the player you would like to play.");
 
             var name = _globalItemsProvider.UpperFirstChar(_printService.ReadInput());
-
-
-            var playerId = players.FirstOrDefault(x=> x.Name == name).Id;
-            var player = _playerRepository.GetPlayerWithInventory(playerId);
-
-            player.LastSaveDateTime = DateTime.Now;
-
-            //_playerRepository.SavePlayers();
+            var player = players.FirstOrDefault(x => x.Name == name);
 
             if (player == null)
             {
@@ -96,6 +89,8 @@ namespace MarrowVale.Business.Services
             }
             else
             {
+                player = _playerRepository.GetPlayerWithInventory(player.Id);
+                player.LastSaveDateTime = DateTime.Now;
                 return player;
             }
         }

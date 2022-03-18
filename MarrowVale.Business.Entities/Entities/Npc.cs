@@ -77,10 +77,11 @@ namespace MarrowVale.Business.Entities.Entities
         public bool Visible { get; private set; }
         [JsonIgnore]
         public IList<Relationship> Relationships { get; set; }
-
         public IList<Ability> Abilities { get; }
         public IList<Spell> SpellBook { get; }
         public IList<Item> Items { get; }
+        [JsonIgnore]
+        public Inventory Inventory { get; set; }
 
         private IList<Dialogue> StartingDialogue { get; }
 

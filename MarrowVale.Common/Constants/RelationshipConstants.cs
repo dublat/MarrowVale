@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MarrowVale.Common.Constants
 {
-    public class Relationships
+    public class RelationshipConstants
     {
         public static readonly string Inside = "INSIDE";
         public static readonly string At = "AT";
@@ -14,5 +14,6 @@ namespace MarrowVale.Common.Constants
         public static readonly string Own = "OWN";
         public static readonly string Path = "PATH";
         public static readonly string Connects = "CONNECTS";
+        public static readonly string PartOf = "PART_OF";
     }
 }

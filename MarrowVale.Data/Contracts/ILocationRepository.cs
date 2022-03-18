@@ -14,5 +14,6 @@ namespace MarrowVale.Data.Contracts
         List<Npc> GetNpcsAtLocation(Location location);
         List<Room> GetConnectingRooms(Location location);
         bool IsPathConnected(Location location, Location location2);
+        bool IsItemAtLocation(Location location, Item item);
     }
 }

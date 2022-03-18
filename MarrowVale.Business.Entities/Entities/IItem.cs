@@ -1,5 +1,6 @@
 ﻿
 using MarrowVale.Common.Utilities;
+using System.Collections.Generic;
 
 namespace MarrowVale.Business.Entities.Entities
 {
@@ -7,7 +8,8 @@ namespace MarrowVale.Business.Entities.Entities
     {
         public Item()
         {
-
+            EntityLabel = "Item";
+            Labels = new List<string> { EntityLabel };
         }
         public string EnvironmentalDescription { get; set; }
         public bool IsVisible { get; set; }

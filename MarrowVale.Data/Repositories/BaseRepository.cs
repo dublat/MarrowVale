@@ -37,6 +37,7 @@ namespace MarrowVale.Data.Repositories
             IEnumerable<T> results = await Where(x => x.Id == id);
             return results.FirstOrDefault();
         }
+
         public virtual async Task<T> GetByName(string name)
         {
             IEnumerable<T> results = await Where(x => x.Name == name);
@@ -51,10 +52,11 @@ namespace MarrowVale.Data.Repositories
 
             return await _graphClient.Cypher
                .Match($"(e:{entity.EntityLabel})")
-                .Where(newQuery)
-                .Return(e => e.As<T>())
-                .ResultsAsync;
+               .Where(newQuery)
+               .Return(e => e.As<T>())
+               .ResultsAsync;
         }
+
 
         public virtual async Task<T> Single(Expression<Func<T, bool>> query)
         {
@@ -126,7 +128,7 @@ namespace MarrowVale.Data.Repositories
                 .ExecuteWithoutResultsAsync();
         }
 
-        public virtual async Task Relate<T2, TRelationship>(Expression<Func<T, bool>> query1, Expression<Func<T2, bool>> query2, TRelationship relationship)
+        public virtual async Task Relate<T2, TRelationship>(Expression<Func<T, bool>> query1, Expression<Func<T2, bool>> query2, TRelationship relationship, bool relationOut = true)
             where T2 : GraphNode, new()
             where TRelationship : GraphRelationship, new()
         {
@@ -137,11 +139,15 @@ namespace MarrowVale.Data.Repositories
 
             object properties = new object();
 
+
+            var d1 = !relationOut ? "<-" : "-";
+            var d2 = relationOut ? "->" : "-";
+
             var cypherQuery = _graphClient.Cypher
                 .Match($"({name1}:{entity1.EntityLabel}),({name2}:{entity2.EntityLabel})")
                 .Where(query1)
                 .AndWhere(query2)
-                .Create($"({name1})-[:{relationship.Name}]->({name2})");
+                .Create($"({name1}){d1}[:{relationship.PrimaryLabel}]{d2}({name2})");
 
             await cypherQuery.ExecuteWithoutResultsAsync();
         }
@@ -167,13 +173,13 @@ namespace MarrowVale.Data.Repositories
                 .Match($"({name1}:{entity1.EntityLabel}),({name2}:{item.EntityLabel})")
                 .Where(query1)
                 .AndWhere((T e) => e.Id == item.Id)
-                .Create($"({name1})-[:{relationship.Name}]->({name2})");
+                .Create($"({name1})-[:{relationship.PrimaryLabel}]->({name2})");
 
             await query2.ExecuteWithoutResultsAsync();
         }
 
 
-        public virtual ICypherFluentQuery<T2> RelatedTo<T2, TRelationship>(Expression<Func<T, bool>> query1, Expression<Func<T2, bool>> query2, TRelationship relationship, bool relationOut = true)
+        public virtual ICypherFluentQuery<T2> RelatedTo<T2, TRelationship>(Expression<Func<T, bool>> query1, Expression<Func<T2, bool>> query2, TRelationship relationship, bool relationOut = true, ChainedQuery preQuery = null)
         where T2 : GraphNode, new()
         where TRelationship : GraphRelationship, new()
         {
@@ -187,11 +193,23 @@ namespace MarrowVale.Data.Repositories
             var d1 = !relationOut ? "<-" : "-";
             var d2 = relationOut ? "->" : "-";
 
-            var query = _graphClient.Cypher
-                .Match($"({name1}:{entity1.EntityLabel}){d1}[:{relationship.Name}]{d2}({name2}:{entity2.EntityLabel})")
-                .Where(query1)
-                .AndWhere(query2)
-                .Return(e => e.As<T2>());
+            ICypherFluentQuery<T2> query;
+            if (preQuery == null)
+            {
+                query = _graphClient.Cypher
+                    .Match($"({name1}:{entity1.EntityLabel}){d1}[:{relationship.ToString()}]{d2}({name2}:{entity2.EntityLabel})")
+                    .Where(query1)
+                    .AndWhere(query2)
+                    .Return(e => e.As<T2>());
+            }
+            else
+            {
+                query2 = PredicateRewriter.Rewrite(query2, preQuery.Alias);
+                query = preQuery.Query.Match($"({name1}:{entity1.EntityLabel}){d1}[:{relationship.PrimaryLabel}]{d2}({preQuery.Alias})")
+                    .Where(query1)
+                    .AndWhere(query2)
+                    .Return(preResult => preResult.As<T2>());
+            }
 
             return query;
         }
@@ -216,7 +234,7 @@ namespace MarrowVale.Data.Repositories
             var d2 = relationOut ? "->" : "-";
 
             var query = _graphClient.Cypher
-                .Match($"({name1}:{entity1.EntityLabel}){d1}[:{relationship.Name}]{d2}({name2}:{entity2.EntityLabel}){d1}[:{relationship2.Name}]{d2}({name3}:{entity3.EntityLabel})")
+                .Match($"({name1}:{entity1.EntityLabel}){d1}[:{relationship.PrimaryLabel}]{d2}({name2}:{entity2.EntityLabel}){d1}[:{relationship2.PrimaryLabel}]{d2}({name3}:{entity3.EntityLabel})")
                 .Where(query1)
                 .AndWhere(query2)
                 .AndWhere(query3)
@@ -245,7 +263,7 @@ namespace MarrowVale.Data.Repositories
             var d4 = relation2Out ? "->" : "-";
 
             var query = _graphClient.Cypher
-                .Match($"({name1}:{entity1.EntityLabel}){d1}[:{relationship.Name}]{d2}({name2}:{entity2.EntityLabel}){d3}[:{relationship2.Name}]{d4}({name3}:{entity3.EntityLabel})")
+                .Match($"({name1}:{entity1.EntityLabel}){d1}[:{relationship.PrimaryLabel}]{d2}({name2}:{entity2.EntityLabel}){d3}[:{relationship2.PrimaryLabel}]{d4}({name3}:{entity3.EntityLabel})")
                 .Where(query1)
                 .AndWhere(query2)
                 .AndWhere(query3)
@@ -254,7 +272,7 @@ namespace MarrowVale.Data.Repositories
         }
 
 
-        public virtual ICypherFluentQuery<T> RelatedFrom<T2, TRelationship>(Expression<Func<T, bool>> query1, Expression<Func<T2, bool>> query2, TRelationship relationship, bool relationOut = true)
+        public virtual ICypherFluentQuery<T> RelatedFrom<T2, TRelationship>(Expression<Func<T, bool>> query1, Expression<Func<T2, bool>> query2, TRelationship relationship, bool relationOut = true, ChainedQuery preQuery = null)
         where T2 : GraphNode, new()
         where TRelationship : GraphRelationship, new()
         {
@@ -268,17 +286,40 @@ namespace MarrowVale.Data.Repositories
             var d1 = !relationOut ? "<-" : "-";
             var d2 = relationOut ? "->" : "-";
 
-
-            var query = _graphClient.Cypher
-                .Match($"({name2}:{entity2.EntityLabel}){d1}[:{relationship.Name}]{d2}({name1}:{entity1.EntityLabel})")
-                .Where(query1)
-                .AndWhere(query2)
-                .Return(e => e.As<T>());
+            ICypherFluentQuery<T> query;
+            if (preQuery == null)
+            {
+                 query = _graphClient.Cypher
+                    .Match($"({name2}:{entity2.FormattedLabels()}){d1}[:{relationship.PrimaryLabel}]{d2}({name1}:{entity1.FormattedLabels()})")
+                    .Where(query1)
+                    .AndWhere(query2)
+                    .Return(e => e.As<T>());
+            }
+            else
+            {
+                query = preQuery.Query.Match($"({name2}:{entity2.FormattedLabels()}){d1}[:{relationship.PrimaryLabel}]{d2}({preQuery.Alias})")
+                    .Where(query1)
+                    .AndWhere(query2)
+                    .Return(preResult => preResult.As<T>());
+            }
 
             return query;
         }
 
 
+        public virtual async Task DeleteRelationship<TRelationship>(Expression<Func<T, bool>> query1, TRelationship relationship)
+        where TRelationship : GraphRelationship, new()
+        {
+            string name1 = query1.Parameters[0].Name;
+            T entity1 = (T)Activator.CreateInstance(query1.Parameters[0].Type);
+
+            var query = _graphClient.Cypher
+                .Match($"()-[r:{relationship.ToString()}]->({name1}:{_entityLabel})")
+                .Where(query1)
+                .Delete("r");
+
+            await query.ExecuteWithoutResultsAsync();
+        }
 
         public virtual async Task DeleteRelationship<T2, TRelationship>(Expression<Func<T, bool>> query1, Expression<Func<T2, bool>> query2, TRelationship relationship)
             where T2 : GraphNode, new()
@@ -290,7 +331,7 @@ namespace MarrowVale.Data.Repositories
             T2 entity2 = (T2)Activator.CreateInstance(query2.Parameters[0].Type);
 
             await _graphClient.Cypher
-                .Match("(" + name1 + ":" + entity1.FormattedLabels() + ")-[r:" + relationship.Name + "]->(" + name2 + ":" + entity2.FormattedLabels() + ")")
+                .Match("(" + name1 + ":" + entity1.FormattedLabels() + ")-[r:" + relationship.PrimaryLabel + "]->(" + name2 + ":" + entity2.FormattedLabels() + ")")
                 .Where(query1)
                 .AndWhere(query2)
                 .Delete("r")
@@ -298,18 +339,53 @@ namespace MarrowVale.Data.Repositories
         }
 
 
-        public GraphRelationship BuildRelationship(string relationship, int length)
-        {
-            return new GraphRelationship($"{relationship}* ..{length}");
-        }
-
-
-
         public ICypherFluentQuery devToolDatabase()
         {
             return _graphClient.Cypher
                 .WithDatabase("devToolBox");
         }
+
+
+        public virtual async Task<T> GetChildrenById(string id)
+        {
+            var prequery = FromChildCategory();
+            var results = await prequery.Query.Match($"({prequery.Alias})").Where((T preResult) => preResult.Id == id).Return(preResult => preResult.As<T>()).ResultsAsync;
+            return results.FirstOrDefault();
+        }
+
+
+        public ChainedQuery FromChildCategory()
+        {
+            return fromCategory(_entityLabel);
+        }
+
+        public ChainedQuery fromCategory(string category)
+        {
+            var alias = "preResult";
+            var preQuery = _graphClient.Cypher.Call($@"n10s.inference.nodesLabelled('{category}',  {{catNameProp: ""Label"",catLabel: ""Topic"",subCatRel: ""SUBCLASS_OF""}})").Yield($"node AS {alias}");
+            return new ChainedQuery {Alias = "preResult", Query = preQuery };
+        }
+
+
+
+
+
+
+
+
+        public virtual async Task DeleteRelationshipById<TRelationship>(T entity, TRelationship relationship)
+        where TRelationship : GraphRelationship, new()
+        {
+            var query = _graphClient.Cypher
+                .Match($"()-[r:{relationship.ToString()}]->(x)")
+                .Where((T x) => x.Id == entity.Id)
+                .Delete("r");
+
+            await query.ExecuteWithoutResultsAsync();
+        }
+
+
+
 
 
     }

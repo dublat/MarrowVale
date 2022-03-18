@@ -14,8 +14,8 @@ namespace MarrowVale.Business.Entities.Entities.PathObstacles
             this.EntityLabel = "Door";
             this.Labels = new List<string>() { EntityLabel };
         }
-        public bool IsClosed { get; set; }
-        public bool IsLocked { get; set; }
+        public bool IsOpen { get; set; }
+        public bool IsUnlocked { get; set; }
         public int Width { get; set; }
         public int Height { get; set; }
         public string Health { get; set; }

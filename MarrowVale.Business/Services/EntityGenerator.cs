@@ -410,7 +410,7 @@ namespace MarrowVale.Business.Services
                     .Match("(start:Road)", "(leadsTo:Road)")
                     .Where((Road start) => start.Id == road.Id)
                     .AndWhere((Road leadsTo) => leadsTo.Id == path.Id)
-                    .Create($"(start)-[:PATH]->(leadsTo)")
+                    .Create($"(start)-[:PATH {{IsObstructed: false}}]->(leadsTo)")
                     .ExecuteWithoutResultsAsync();
             }
 
@@ -420,7 +420,7 @@ namespace MarrowVale.Business.Services
                     .Match("(start:Road)", "(leadsTo:Building)")
                     .Where((Road start) => start.Id == road.Id)
                     .AndWhere((Building leadsTo) => leadsTo.Id == path.Id)
-                    .Create($"(start)-[:PATH]->(leadsTo)")
+                    .Create($"(start)-[:PATH {{IsObstructed: false}}]->(leadsTo)")
                     .ExecuteWithoutResultsAsync();
             }
         }
@@ -433,7 +433,7 @@ namespace MarrowVale.Business.Services
                     .Match("(start:Building)", "(leadsTo:Road)")
                     .Where((Building start) => start.Id == building.Id)
                     .AndWhere((Road leadsTo) => leadsTo.Id == path.Id)
-                    .Create($"(start)-[:PATH]->(leadsTo)")
+                    .Create($"(start)-[:PATH {{IsObstructed: false}}]->(leadsTo)")
                     .ExecuteWithoutResultsAsync();
             }
 
@@ -441,8 +441,8 @@ namespace MarrowVale.Business.Services
                 .Match("(r:Room)", "(b:Building)")
                 .Where((Room r) => r.Id == building.Entrance.Id)
                 .AndWhere((Building b) => b.Id == building.Id)
-                .Create($"(r)-[:PATH]->(b)")
-                .Create($"(b)-[:PATH]->(r)")
+                .Create($"(r)-[:PATH {{IsObstructed: false}}]->(b)")
+                .Create($"(b)-[:PATH {{IsObstructed: false}}]->(r)")
                 .ExecuteWithoutResultsAsync();
 
         }
@@ -463,7 +463,7 @@ namespace MarrowVale.Business.Services
                     .Match("(r1:Room)", "(r2:Room)")
                     .Where((Room r1) => r1.Id == room.Id)
                     .AndWhere((Room r2) => r2.Id == connectedRoom.Id)
-                    .Create($"(r1)-[:PATH]->(r2)")
+                    .Create($"(r1)-[:PATH {{IsObstructed: false}}]->(r2)")
                     .ExecuteWithoutResultsAsync();
             }
 

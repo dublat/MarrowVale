@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MarrowVale.Business.Entities.Entities
 {
-    public class Key : GraphNode
+    public class Key : Item
     {
         public Key()
         {
