@@ -128,7 +128,7 @@ namespace MarrowVale.Data.Repositories
                 .ExecuteWithoutResultsAsync();
         }
 
-        public virtual async Task Relate<T2, TRelationship>(Expression<Func<T, bool>> query1, Expression<Func<T2, bool>> query2, TRelationship relationship, bool relationOut = true)
+        public virtual async Task Relate<T2, TRelationship>(Expression<Func<T, bool>> query1, Expression<Func<T2, bool>> query2, TRelationship relationship)
             where T2 : GraphNode, new()
             where TRelationship : GraphRelationship, new()
         {
@@ -140,14 +140,11 @@ namespace MarrowVale.Data.Repositories
             object properties = new object();
 
 
-            var d1 = !relationOut ? "<-" : "-";
-            var d2 = relationOut ? "->" : "-";
-
             var cypherQuery = _graphClient.Cypher
                 .Match($"({name1}:{entity1.EntityLabel}),({name2}:{entity2.EntityLabel})")
                 .Where(query1)
                 .AndWhere(query2)
-                .Create($"({name1}){d1}[:{relationship.PrimaryLabel}]{d2}({name2})");
+                .Create($"({name1}){relationship.ToString()}({name2})");
 
             await cypherQuery.ExecuteWithoutResultsAsync();
         }
@@ -173,13 +170,13 @@ namespace MarrowVale.Data.Repositories
                 .Match($"({name1}:{entity1.EntityLabel}),({name2}:{item.EntityLabel})")
                 .Where(query1)
                 .AndWhere((T e) => e.Id == item.Id)
-                .Create($"({name1})-[:{relationship.PrimaryLabel}]->({name2})");
+                .Create($"({name1}){relationship.ToString()}({name2})");
 
             await query2.ExecuteWithoutResultsAsync();
         }
 
 
-        public virtual ICypherFluentQuery<T2> RelatedTo<T2, TRelationship>(Expression<Func<T, bool>> query1, Expression<Func<T2, bool>> query2, TRelationship relationship, bool relationOut = true, ChainedQuery preQuery = null)
+        public virtual ICypherFluentQuery<T2> RelatedTo<T2, TRelationship>(Expression<Func<T, bool>> query1, Expression<Func<T2, bool>> query2, TRelationship relationship, ChainedQuery preQuery = null)
         where T2 : GraphNode, new()
         where TRelationship : GraphRelationship, new()
         {
@@ -190,14 +187,12 @@ namespace MarrowVale.Data.Repositories
             T2 entity2 = (T2)Activator.CreateInstance(query2.Parameters[0].Type);
 
             query2 = PredicateRewriter.Rewrite(query2, name2);
-            var d1 = !relationOut ? "<-" : "-";
-            var d2 = relationOut ? "->" : "-";
 
             ICypherFluentQuery<T2> query;
             if (preQuery == null)
             {
                 query = _graphClient.Cypher
-                    .Match($"({name1}:{entity1.EntityLabel}){d1}[:{relationship.ToString()}]{d2}({name2}:{entity2.EntityLabel})")
+                    .Match($"({name1}:{entity1.EntityLabel}){relationship.ToString()}({name2}:{entity2.EntityLabel})")
                     .Where(query1)
                     .AndWhere(query2)
                     .Return(e => e.As<T2>());
@@ -205,7 +200,7 @@ namespace MarrowVale.Data.Repositories
             else
             {
                 query2 = PredicateRewriter.Rewrite(query2, preQuery.Alias);
-                query = preQuery.Query.Match($"({name1}:{entity1.EntityLabel}){d1}[:{relationship.PrimaryLabel}]{d2}({preQuery.Alias})")
+                query = preQuery.Query.Match($"({name1}:{entity1.EntityLabel}){relationship.ToString()}({preQuery.Alias})")
                     .Where(query1)
                     .AndWhere(query2)
                     .Return(preResult => preResult.As<T2>());
@@ -215,7 +210,7 @@ namespace MarrowVale.Data.Repositories
         }
 
 
-        public virtual ICypherFluentQuery<T3> RelatedTo<T2, T3, TRelationship>(Expression<Func<T, bool>> query1, Expression<Func<T2, bool>> query2, Expression<Func<T3, bool>> query3, TRelationship relationship, TRelationship relationship2, bool relationOut = true)
+        public virtual ICypherFluentQuery<T3> RelatedTo<T2, T3, TRelationship>(Expression<Func<T, bool>> query1, Expression<Func<T2, bool>> query2, Expression<Func<T3, bool>> query3, TRelationship relationship, TRelationship relationship2)
         where T2 : GraphNode, new()
         where T3 : GraphNode, new()
         where TRelationship : GraphRelationship, new()
@@ -230,11 +225,8 @@ namespace MarrowVale.Data.Repositories
 
             query3 = PredicateRewriter.Rewrite(query3, name2);
 
-            var d1 = !relationOut ? "<-" : "-";
-            var d2 = relationOut ? "->" : "-";
-
             var query = _graphClient.Cypher
-                .Match($"({name1}:{entity1.EntityLabel}){d1}[:{relationship.PrimaryLabel}]{d2}({name2}:{entity2.EntityLabel}){d1}[:{relationship2.PrimaryLabel}]{d2}({name3}:{entity3.EntityLabel})")
+                .Match($"({name1}:{entity1.EntityLabel}){relationship.ToString()}({name2}:{entity2.EntityLabel}){relationship2.ToString()}({name3}:{entity3.EntityLabel})")
                 .Where(query1)
                 .AndWhere(query2)
                 .AndWhere(query3)
@@ -242,7 +234,7 @@ namespace MarrowVale.Data.Repositories
             return query;
         }
 
-        public virtual ICypherFluentQuery<T2> RelatedToAndFrom<T2, T3, TRelationship>(Expression<Func<T, bool>> query1, Expression<Func<T2, bool>> query2, Expression<Func<T3, bool>> query3, TRelationship relationship, TRelationship relationship2, bool relationOut = true, bool relation2Out = true)
+        public virtual ICypherFluentQuery<T2> RelatedToAndFrom<T2, T3, TRelationship>(Expression<Func<T, bool>> query1, Expression<Func<T2, bool>> query2, Expression<Func<T3, bool>> query3, TRelationship relationship, TRelationship relationship2)
         where T2 : GraphNode, new()
         where T3 : GraphNode, new()
         where TRelationship : GraphRelationship, new()
@@ -257,13 +249,9 @@ namespace MarrowVale.Data.Repositories
 
             query2 = PredicateRewriter.Rewrite(query2, name2);
 
-            var d1 = !relationOut ? "<-" : "-";
-            var d2 = relationOut ? "->" : "-";
-            var d3 = !relation2Out ? "<-" : "-";
-            var d4 = relation2Out ? "->" : "-";
 
             var query = _graphClient.Cypher
-                .Match($"({name1}:{entity1.EntityLabel}){d1}[:{relationship.PrimaryLabel}]{d2}({name2}:{entity2.EntityLabel}){d3}[:{relationship2.PrimaryLabel}]{d4}({name3}:{entity3.EntityLabel})")
+                .Match($"({name1}:{entity1.EntityLabel}){relationship.ToString()}({name2}:{entity2.EntityLabel}){relationship2.ToString()}({name3}:{entity3.EntityLabel})")
                 .Where(query1)
                 .AndWhere(query2)
                 .AndWhere(query3)
@@ -272,7 +260,7 @@ namespace MarrowVale.Data.Repositories
         }
 
 
-        public virtual ICypherFluentQuery<T> RelatedFrom<T2, TRelationship>(Expression<Func<T, bool>> query1, Expression<Func<T2, bool>> query2, TRelationship relationship, bool relationOut = true, ChainedQuery preQuery = null)
+        public virtual ICypherFluentQuery<T> RelatedFrom<T2, TRelationship>(Expression<Func<T, bool>> query1, Expression<Func<T2, bool>> query2, TRelationship relationship, ChainedQuery preQuery = null)
         where T2 : GraphNode, new()
         where TRelationship : GraphRelationship, new()
         {
@@ -283,21 +271,19 @@ namespace MarrowVale.Data.Repositories
             T2 entity2 = (T2)Activator.CreateInstance(query2.Parameters[0].Type);
 
             query1 = PredicateRewriter.Rewrite(query1, name1);
-            var d1 = !relationOut ? "<-" : "-";
-            var d2 = relationOut ? "->" : "-";
 
             ICypherFluentQuery<T> query;
             if (preQuery == null)
             {
                  query = _graphClient.Cypher
-                    .Match($"({name2}:{entity2.FormattedLabels()}){d1}[:{relationship.PrimaryLabel}]{d2}({name1}:{entity1.FormattedLabels()})")
+                    .Match($"({name2}:{entity2.FormattedLabels()}){relationship.ToString()}({name1}:{entity1.FormattedLabels()})")
                     .Where(query1)
                     .AndWhere(query2)
                     .Return(e => e.As<T>());
             }
             else
             {
-                query = preQuery.Query.Match($"({name2}:{entity2.FormattedLabels()}){d1}[:{relationship.PrimaryLabel}]{d2}({preQuery.Alias})")
+                query = preQuery.Query.Match($"({name2}:{entity2.FormattedLabels()}){relationship.ToString()}({preQuery.Alias})")
                     .Where(query1)
                     .AndWhere(query2)
                     .Return(preResult => preResult.As<T>());
@@ -314,9 +300,9 @@ namespace MarrowVale.Data.Repositories
             T entity1 = (T)Activator.CreateInstance(query1.Parameters[0].Type);
 
             var query = _graphClient.Cypher
-                .Match($"()-[r:{relationship.ToString()}]->({name1}:{_entityLabel})")
+                .Match($"(){relationship.ToString()}({name1}:{_entityLabel})")
                 .Where(query1)
-                .Delete("r");
+                .Delete(relationship.Alias);
 
             await query.ExecuteWithoutResultsAsync();
         }
@@ -331,7 +317,7 @@ namespace MarrowVale.Data.Repositories
             T2 entity2 = (T2)Activator.CreateInstance(query2.Parameters[0].Type);
 
             await _graphClient.Cypher
-                .Match("(" + name1 + ":" + entity1.FormattedLabels() + ")-[r:" + relationship.PrimaryLabel + "]->(" + name2 + ":" + entity2.FormattedLabels() + ")")
+                .Match("(" + name1 + ":" + entity1.FormattedLabels() + ")" + relationship.ToString() + "(" + name2 + ":" + entity2.FormattedLabels() + ")")
                 .Where(query1)
                 .AndWhere(query2)
                 .Delete("r")

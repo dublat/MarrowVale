@@ -1,5 +1,6 @@
 ﻿using MarrowVale.Business.Entities.Entities;
 using MarrowVale.Business.Entities.Entities.Graph;
+using MarrowVale.Business.Entities.Entities.Relationships;
 using MarrowVale.Common.Constants;
 using MarrowVale.Common.Contracts;
 using MarrowVale.Data.Contracts;
@@ -31,7 +32,11 @@ namespace MarrowVale.Data.Repositories
             if (npc == null || player == null)
                 return false;
 
-            return RelatedToAndFrom<Room, Player, GraphRelationship>(x => x.Id == npc.Id, z => true, y => y.Id == player.Id, new GraphRelationship(RelationshipConstants.Inside), new GraphRelationship(RelationshipConstants.At), relation2Out: false).ResultsAsync.Result.Any();
+            var inside = new GraphRelationship(RelationshipConstants.Inside);
+            inside.IsDirectedOut = true;
+            var at = new AtRelation { IsDirectedOut = false };
+
+            return RelatedToAndFrom<Room, Player, GraphRelationship>(x => x.Id == npc.Id, z => true, y => y.Id == player.Id, inside, at).ResultsAsync.Result.Any();
 
         }
 
@@ -151,7 +156,8 @@ namespace MarrowVale.Data.Repositories
 
         public void SetCombatEquipment(Npc npc)
         {
-            var equipped = new GraphRelationship(RelationshipConstants.Equipped);
+            var equipped = new GraphRelationship(RelationshipConstants.Equipped, isDirectedOut: true);
+
             npc.Armor = RelatedTo<Armor, GraphRelationship>(x => x.Id == npc.Id, y => true, equipped).ResultsAsync.Result.FirstOrDefault();
             npc.Weapon = RelatedTo<Weapon, GraphRelationship>(x => x.Id == npc.Id, y => true, equipped).ResultsAsync.Result.FirstOrDefault();
         }

@@ -9,13 +9,14 @@ namespace MarrowVale.Business.Entities.Entities
         {
             Labels = new List<string>();            
         }
-        public GraphRelationship(string name, int pathLength = 1) : this()
+        public GraphRelationship(string name, int pathLength = 1, bool? isDirectedOut = null) : this()
         {
             PrimaryLabel = name;
             PathLength = pathLength;
+            IsDirectedOut = isDirectedOut;
         }
         [JsonIgnore]
-        public bool? IsDirectionOut { get; set; }
+        public bool? IsDirectedOut { get; set; }
         [JsonIgnore]
         public string Alias { get; set; }
         [JsonIgnore]
@@ -36,11 +37,11 @@ namespace MarrowVale.Business.Entities.Entities
             var left = "-";
             var right = "-";
 
-            if (IsDirectionOut == true)
+            if (IsDirectedOut == true)
             {
                 right = "->";
             }
-            else if (IsDirectionOut == false)
+            else if (IsDirectedOut == false)
             {
                 left = "<-";
             }
@@ -51,6 +52,7 @@ namespace MarrowVale.Business.Entities.Entities
             return $"{left}[{Alias}:{PrimaryLabel}* ..{PathLength} {FormatProperties()}]{right}";
         }
 
+        //Set this method in children relationships
         public virtual string FormatProperties()
         {
             return "";
