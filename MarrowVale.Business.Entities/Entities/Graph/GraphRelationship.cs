@@ -14,9 +14,13 @@ namespace MarrowVale.Business.Entities.Entities
             PrimaryLabel = name;
             PathLength = pathLength;
         }
+        [JsonIgnore]
         public bool? IsDirectionOut { get; set; }
+        [JsonIgnore]
         public string Alias { get; set; }
+        [JsonIgnore]
         public string PrimaryLabel { get; set; }
+        [JsonIgnore]
         public int PathLength { get; set; }
         [JsonIgnore]
         public IEnumerable<string> Labels { get; set; }
@@ -44,10 +48,13 @@ namespace MarrowVale.Business.Entities.Entities
             if (PathLength == 1)
                 return PrimaryLabel;
 
-            return $"{left}[{Alias}:{PrimaryLabel}* ..{PathLength}]{right}";
+            return $"{left}[{Alias}:{PrimaryLabel}* ..{PathLength} {FormatProperties()}]{right}";
         }
 
-        //public abstract string FormatProperties();
+        public virtual string FormatProperties()
+        {
+            return "";
+        }
 
     }
 }

@@ -11,11 +11,15 @@ namespace MarrowVale.Business.Entities.Entities.Relationships
     {
         public AtRelation() : base(RelationshipConstants.At) {}
 
-        public bool IsVisible { get; set; }
+        public bool? IsVisible { get; set; }
 
-        public override string ToString()
+        public override string FormatProperties()
         {
-            return $"{PrimaryLabel}* ..{PathLength} {{IsVisible: {IsVisible}}}";
+            if (IsVisible is not null)
+                return $"{{IsVisible: {IsVisible}}}";
+            return "";
         }
+
+
     }
 }

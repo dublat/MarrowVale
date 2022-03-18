@@ -377,7 +377,7 @@ namespace MarrowVale.Data.Repositories
         where TRelationship : GraphRelationship, new()
         {
             var query = _graphClient.Cypher
-                .Match($"()-[r:{relationship.ToString()}]->(x)")
+                .Match($"(){relationship.ToString()}(x)")
                 .Where((T x) => x.Id == entity.Id)
                 .Delete("r");
 
