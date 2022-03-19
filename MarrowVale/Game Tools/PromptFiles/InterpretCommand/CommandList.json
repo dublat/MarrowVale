@@ -74,6 +74,11 @@
       "example": "Equip my longbow"
     },
     {
+      "command": "Drop",
+      "description": "Drops item",
+      "example": "Drop my necklace"
+    },
+    {
       "command": "Use",
       "description": "Equips item",
       "example": "Use healing potion"

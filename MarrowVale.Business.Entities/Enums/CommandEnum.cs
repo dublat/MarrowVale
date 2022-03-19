@@ -19,6 +19,8 @@ namespace MarrowVale.Business.Entities.Enums
         Swim,
         Dance,
         Take,
+        Drop,
+        Stash,
         Give,
         Attack,
         Equip,

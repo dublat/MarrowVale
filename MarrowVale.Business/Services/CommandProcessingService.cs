@@ -69,6 +69,7 @@ namespace MarrowVale.Business.Services
                 CommandEnum.Exit => _navigationService.Exit(command, player),
                 CommandEnum.LookAround => _navigationService.CurrentLocationDescription(player),
                 CommandEnum.Take => _enviornmentalInteractionService.PickUpItem(command, player),
+                CommandEnum.Drop => _enviornmentalInteractionService.DropItem(command, player),
                 _ => new MarrowValeMessage { ErrorText = "Command Is Not Mapped to a function" }
             };
 

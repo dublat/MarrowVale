@@ -135,7 +135,7 @@ namespace MarrowVale.Business.Services
         {
             var message = new MarrowValeMessage();
 
-            var item = _itemRepository.GetById(command.DirectObjectNode.Id).Result;
+            var item = _itemRepository.GetChildrenById(command.DirectObjectNode.Id).Result;
             var currentLocation = _playerRepository.GetPlayerLocation(player);
             var isItemOwnedByPlayer = player.Inventory.Items.Any(x => x.Id == item.Id);
             if (isItemOwnedByPlayer)

@@ -105,6 +105,9 @@
     <None Update="Game Tools\PromptFiles\DivineIntervention\Smite.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Game Tools\PromptFiles\InterpretCommand\Drop.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Game Tools\PromptFiles\InterpretCommand\Take.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
