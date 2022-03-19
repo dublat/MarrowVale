@@ -141,7 +141,7 @@ namespace MarrowVale.Data.Repositories
 
 
             var cypherQuery = _graphClient.Cypher
-                .Match($"({name1}:{entity1.EntityLabel}),({name2}:{entity2.EntityLabel})")
+                .Match($"({name1}),({name2}:{entity2.EntityLabel})")
                 .Where(query1)
                 .AndWhere(query2)
                 .Create($"({name1}){relationship.ToString()}({name2})");
@@ -300,9 +300,13 @@ namespace MarrowVale.Data.Repositories
             T entity1 = (T)Activator.CreateInstance(query1.Parameters[0].Type);
 
             var query = _graphClient.Cypher
-                .Match($"(){relationship.ToString()}({name1}:{_entityLabel})")
+                .Match($"(zzz){relationship.ToString()}({name1}:{_entityLabel})")
+                .OptionalMatch($"({name1})-[r2:PART_OF]->()")
+                .OptionalMatch($"(zzz)-[r3:PART_OF]->()")
                 .Where(query1)
-                .Delete(relationship.Alias);
+                .Delete(relationship.Alias)
+                .Delete("r2")
+                .Delete("r3");
 
             await query.ExecuteWithoutResultsAsync();
         }
@@ -349,7 +353,7 @@ namespace MarrowVale.Data.Repositories
         {
             var alias = "preResult";
             var preQuery = _graphClient.Cypher.Call($@"n10s.inference.nodesLabelled('{category}',  {{catNameProp: ""Label"",catLabel: ""Topic"",subCatRel: ""SUBCLASS_OF""}})").Yield($"node AS {alias}");
-            return new ChainedQuery {Alias = "preResult", Query = preQuery };
+            return new ChainedQuery {Alias = alias, Query = preQuery };
         }
 
 

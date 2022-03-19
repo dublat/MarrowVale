@@ -37,7 +37,7 @@ namespace MarrowVale.Data.Repositories
             await DeleteRelationshipById(item, owns);
             var partOf = new GraphRelationship(RelationshipConstants.PartOf, isDirectedOut: false);
             await Relate<Inventory, GraphRelationship>(y => y.Id == item.Id, x => x.Id == player.Inventory.Id, partOf);
-
+            player.Inventory.AddItem(item);
 
             AliasManager.DisposeAlias(player, item);
             AliasManager.DisposeAlias(at, owns);
@@ -66,12 +66,16 @@ namespace MarrowVale.Data.Repositories
         public async Task TransferItem(Location location, Item item)
         {
             var at = new AtRelation { IsDirectedOut = false };
-
             AliasManager.CreateAlias(location, item);
-            AliasManager.CreateAlias(at);
 
-            await DeleteRelationship(x => x.Id == item.Id, at);
-            await Relate<Inventory, GraphRelationship>(y => y.Id == item.Id, x => x.Id == location.Id, at);
+            AliasManager.CreateAlias(at);
+            await DeleteRelationshipById(item, at);
+            var owns = new GraphRelationship("OWN", isDirectedOut: true);
+
+            AliasManager.CreateAlias(owns);
+            await DeleteRelationshipById(item, owns);
+
+            //await Relate<Location, GraphRelationship>(y => y.Id == item.Id, x => x.Id == location.Id, at);
 
             AliasManager.DisposeAlias(location, item);
             AliasManager.DisposeAlias(at);

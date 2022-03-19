@@ -93,11 +93,14 @@ namespace MarrowVale.Data.Repositories
 
         public Inventory GetInventory(Player player)
         {
-            return _graphClient.Cypher
-                        .Match("(x:Player)-[r:OWNS]->(inventory:Inventory)-[]->(item:Item)")
+            var query = _graphClient.Cypher
+                        .Call(@"n10s.inference.nodesLabelled('Item',  {catNameProp: ""Label"",catLabel: ""Topic"",subCatRel: ""SUBCLASS_OF""})").Yield($"node AS allItems")
+                        .Match("(x:Player)-[r:OWN]->(inventory:Inventory)-[]->(allItems)")
                         .Where((Player x) => x.Id == player.Id)
-                        .With("{Id:inventory.Id, CurrentCurrency:inventory.CurrentCurrency, MaxCurrency:inventory.MaxCurrency, Items:collect(item)} as playerInventory")
-                        .Return(playerInventory => playerInventory.As<Inventory>()).ResultsAsync.Result.FirstOrDefault();
+                        .With("{Id:inventory.Id, CurrentCurrency:inventory.CurrentCurrency, MaxCurrency:inventory.MaxCurrency, Items:collect(allItems)} as playerInventory")
+                        .Return(playerInventory => playerInventory.As<Inventory>());
+
+            return query.ResultsAsync.Result.FirstOrDefault();
 
         }
 
