@@ -85,7 +85,7 @@ namespace MarrowVale.Business.Services
             var door = _doorRepository.GetById(command.DirectObjectNode.Id).Result;
             if (_doorRepository.IsDoorUnlockable(player, door))
             {
-                _doorRepository.LockDoor(door);
+                _doorRepository.UnlockDoor(door);
                 message.ResultText = "Door unlocked PlaceHolder";
             }
             else
@@ -100,15 +100,28 @@ namespace MarrowVale.Business.Services
         {
             var message = new MarrowValeMessage();
             var door = _doorRepository.GetById(command.DirectObjectNode.Id).Result;
-            if (_doorRepository.IsDoorLockable(player, door))
+
+
+            if (door.IsOpen)
             {
-                _doorRepository.UnlockDoor(door);
-                message.ResultText = "Door locked PlaceHolder";
+                message.ErrorText = "Can not lock open door placeholder";
             }
-            else
+            else if (!door.IsUnlocked)
+            {
+                message.ErrorText = "Door is already locked placeholder";
+            }
+            else if (!_doorRepository.IsDoorLockable(player, door))
             {
                 message.ErrorText = "Unable to lock the door";
             }
+            else
+            {
+                _doorRepository.LockDoor(door);
+                message.ResultText = "Door locked PlaceHolder";
+            }
+
+
+
 
             return message;
         }

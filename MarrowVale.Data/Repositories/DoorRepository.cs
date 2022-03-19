@@ -1,7 +1,9 @@
 ﻿using MarrowVale.Business.Entities.Entities;
 using MarrowVale.Business.Entities.Entities.PathObstacles;
+using MarrowVale.Common.Constants;
 using MarrowVale.Data.Contracts;
 using Neo4jClient;
+using System.Linq;
 
 namespace MarrowVale.Data.Repositories
 {
@@ -28,7 +30,17 @@ namespace MarrowVale.Data.Repositories
 
         public bool IsDoorLockable(Player player, Door door)
         {
-            throw new System.NotImplementedException();
+            var own = RelationshipConstants.Own;
+            var partOf = RelationshipConstants.PartOf;
+            var unlocks = RelationshipConstants.Unlocks;
+
+            var query = _graphClient.Cypher
+                .Match($"(x:Player)-[r:{own}]->(inventory:Inventory)-[:{partOf}]->(:DoorKey)-[:{unlocks}]->(d:Door), (x)-[:{at}]->()-[:LEADS_TO]->(d)")
+                .Where((Player x) => x.Id == player.Id)
+                .AndWhere((Door d) => d.Id == door.Id)
+                .Return(x => x.As<Player>());
+
+            return query.ResultsAsync.Result.Any();
         }
 
         public bool IsDoorOpenable(Player player, Door door)

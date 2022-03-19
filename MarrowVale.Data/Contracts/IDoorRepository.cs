@@ -10,6 +10,7 @@ namespace MarrowVale.Data.Contracts
         bool IsDoorCloseable(Player player, Door door);
         bool IsDoorUnlockable(Player player, Door door);
         bool IsDoorLockable(Player player, Door door);
+        bool IsDoorLocked(Player player, Door door);
         void OpenDoor(Door door);
         void CloseDoor(Door door);
         void LockDoor(Door door);
