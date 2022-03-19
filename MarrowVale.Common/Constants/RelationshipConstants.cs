@@ -15,5 +15,6 @@ namespace MarrowVale.Common.Constants
         public static readonly string Path = "PATH";
         public static readonly string Connects = "CONNECTS";
         public static readonly string PartOf = "PART_OF";
+        public static readonly string Sells = "SELLS";
     }
 }

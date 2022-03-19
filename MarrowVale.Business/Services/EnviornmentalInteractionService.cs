@@ -134,6 +134,11 @@ namespace MarrowVale.Business.Services
         public MarrowValeMessage DropItem(Command command, Player player)
         {
             var message = new MarrowValeMessage();
+            if (command.DirectObjectNode == null)
+            {
+                message.ErrorText = "Unable to drop the item";
+                return message;
+            }
 
             var item = _itemRepository.GetChildrenById(command.DirectObjectNode.Id).Result;
             var currentLocation = _playerRepository.GetPlayerLocation(player);

@@ -68,14 +68,18 @@ namespace MarrowVale.Data.Repositories
             var at = new AtRelation { IsDirectedOut = false };
             AliasManager.CreateAlias(location, item);
 
-            AliasManager.CreateAlias(at);
-            await DeleteRelationshipById(item, at);
             var owns = new GraphRelationship("OWN", isDirectedOut: true);
-
             AliasManager.CreateAlias(owns);
             await DeleteRelationshipById(item, owns);
 
             //await Relate<Location, GraphRelationship>(y => y.Id == item.Id, x => x.Id == location.Id, at);
+            var query = _graphClient.Cypher
+                .Match("(droppedItem),(currentLocation)")
+                .Where((Location currentLocation) => currentLocation.Id == location.Id)
+                .AndWhere((Item droppedItem) => droppedItem.Id == item.Id)
+                .Create("(droppedItem)-[:AT]->(currentLocation)");
+
+            await query.ExecuteWithoutResultsAsync();
 
             AliasManager.DisposeAlias(location, item);
             AliasManager.DisposeAlias(at);

@@ -364,11 +364,20 @@ namespace MarrowVale.Data.Repositories
             getById = PredicateRewriter.Rewrite(getById, baseEntity.Alias);
 
             var query = _graphClient.Cypher
-                .Match($"(){relationship.ToString()}({baseEntity.Alias})")
+                .Match($"(zzz){relationship.ToString()}({baseEntity.Alias})")
                 .Where(getById)
                 .Delete(relationship.Alias);
 
+            var query2 = _graphClient.Cypher
+                .Match($"(zzz){relationship.ToString()}({baseEntity.Alias})")
+                .OptionalMatch($"({baseEntity.Alias})-[r2:PART_OF]->()")
+                .OptionalMatch($"(zzz)-[r3:PART_OF]->()")
+                .Where(getById)
+                .Delete("r2")
+                .Delete("r3");
+
             await query.ExecuteWithoutResultsAsync();
+            await query2.ExecuteWithoutResultsAsync();
         }
 
 

@@ -118,8 +118,12 @@ namespace MarrowVale.Data.Repositories
 
         public Item SellItem(Npc npc, Player player, Item item, int price, int quantity = 1)
         {
+            var own = RelationshipConstants.Own;
+            var partOf = RelationshipConstants.PartOf;
+            var sells = RelationshipConstants.Sells;
+
             return _graphClient.Cypher
-                .Match("(p:Player)-[r1:OWNS]->(playerInventory:Inventory)-[r2:PARTOF]->(tradedItem:Item),(merchant:Character)-[r3:SELLS]->(merchantInventory:Inventory)")
+                .Match($"(p:Player)-[r1:{own}]->(playerInventory:Inventory)-[r2:{partOf}]->(tradedItem:Item),(merchant:Character)-[r3:{sells}]->(merchantInventory:Inventory)")
                 .Where((Player p) => p.Id == player.Id)
                 .AndWhere((Npc merchant) => merchant.Id == npc.Id)
                 .AndWhere((Item tradedItem) => tradedItem.Id == item.Id)
