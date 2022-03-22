@@ -10,6 +10,7 @@ namespace MarrowVale.Common.Constants
     {
         public static readonly string Inside = "INSIDE";
         public static readonly string At = "AT";
+        public static readonly string LeadsTo = "LEADS_TO";
         public static readonly string Equipped = "EQUIPPED";
         public static readonly string Own = "OWN";
         public static readonly string Path = "PATH";

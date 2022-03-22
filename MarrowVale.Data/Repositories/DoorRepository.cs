@@ -1,9 +1,11 @@
 ﻿using MarrowVale.Business.Entities.Entities;
 using MarrowVale.Business.Entities.Entities.PathObstacles;
+using MarrowVale.Business.Entities.Entities.Relationships;
 using MarrowVale.Common.Constants;
 using MarrowVale.Data.Contracts;
 using Neo4jClient;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace MarrowVale.Data.Repositories
 {
@@ -18,19 +20,47 @@ namespace MarrowVale.Data.Repositories
             throw new System.NotImplementedException();
         }
 
-        public void CloseDoor(Door door)
+        public async Task CloseDoor(Door door)
         {
-            throw new System.NotImplementedException();
+            var leadsTo = RelationshipConstants.LeadsTo;
+            var path = RelationshipConstants.Path;
+
+            var query = _graphClient.Cypher
+                .Match($"(location1)-[:{leadsTo}]->(d:{door.EntityLabel})<-[:{leadsTo}]-(location2),(location1)-[path:{path}]-(location2)")
+                .Where((Door d) => d.Id == door.Id)
+                .Set("path.IsObstructed = true");
+
+            await query.ExecuteWithoutResultsAsync();
+
+            door.IsOpen = false;
+            await Update(door);
+        }
+
+        public async Task OpenDoor(Door door)
+        {
+            var leadsTo = RelationshipConstants.LeadsTo;
+            var path = RelationshipConstants.Path;
+
+            var query = _graphClient.Cypher
+                .Match($"(location1)-[:{leadsTo}]->(d:{door.EntityLabel})<-[:{leadsTo}]-(location2),(location1)-[path:{path}]-(location2)")
+                .Where((Door d) => d.Id == door.Id)
+                .Set("path.IsObstructed = false");
+
+            await query.ExecuteWithoutResultsAsync();
+
+            door.IsOpen = true;
+            await Update(door);
         }
 
         public bool IsDoorCloseable(Player player, Door door)
         {
-            throw new System.NotImplementedException();
+            return true;
         }
 
         public bool IsDoorLockable(Player player, Door door)
         {
             var own = RelationshipConstants.Own;
+            var at = RelationshipConstants.At;
             var partOf = RelationshipConstants.PartOf;
             var unlocks = RelationshipConstants.Unlocks;
 
@@ -48,25 +78,22 @@ namespace MarrowVale.Data.Repositories
             throw new System.NotImplementedException();
         }
 
-        public bool IsDoorUnlockable(Player player, Door door)
+        public bool HasKey(Player player, Door door)
         {
-            throw new System.NotImplementedException();
+            var own = RelationshipConstants.Own;
+            var at = RelationshipConstants.At;
+            var partOf = RelationshipConstants.PartOf;
+            var unlocks = RelationshipConstants.Unlocks;
+
+            var query = _graphClient.Cypher
+                .Match($"(x:Player)-[r:{own}]->(inventory:Inventory)-[:{partOf}]->(:DoorKey)-[:{unlocks}]->(d:Door), (x)-[:{at}]->()-[:LEADS_TO]->(d)")
+                .Where((Player x) => x.Id == player.Id)
+                .AndWhere((Door d) => d.Id == door.Id)
+                .Return(x => x.As<Player>());
+
+            return query.ResultsAsync.Result.Any();
         }
 
-        public void LockDoor(Door door)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public void OpenDoor(Door door)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public void UnlockDoor(Door door)
-        {
-            throw new System.NotImplementedException();
-        }
     }
 
 }

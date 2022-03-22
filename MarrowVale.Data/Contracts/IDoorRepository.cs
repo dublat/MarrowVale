@@ -1,6 +1,6 @@
 ﻿using MarrowVale.Business.Entities.Entities;
 using MarrowVale.Business.Entities.Entities.PathObstacles;
-
+using System.Threading.Tasks;
 
 namespace MarrowVale.Data.Contracts
 {
@@ -8,13 +8,9 @@ namespace MarrowVale.Data.Contracts
     {
         bool IsDoorOpenable(Player player, Door door);
         bool IsDoorCloseable(Player player, Door door);
-        bool IsDoorUnlockable(Player player, Door door);
-        bool IsDoorLockable(Player player, Door door);
-        bool IsDoorLocked(Player player, Door door);
-        void OpenDoor(Door door);
-        void CloseDoor(Door door);
-        void LockDoor(Door door);
-        void UnlockDoor(Door door);
+        bool HasKey(Player player, Door door);
+        Task OpenDoor(Door door);
+        Task CloseDoor(Door door);
         void BreakDoor(Door door);
 
     }

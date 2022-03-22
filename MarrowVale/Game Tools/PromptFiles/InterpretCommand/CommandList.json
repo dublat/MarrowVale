@@ -84,6 +84,16 @@
       "example": "Use healing potion"
     },
     {
+      "command": "Open",
+      "description": "Opens Door, Window, or Chest",
+      "example": "Open"
+    },
+    {
+      "command": "Close",
+      "description": "Closes Door, Window, or Chest",
+      "example": "Close"
+    },
+    {
       "command": "Read",
       "description": "Try to read the target item",
       "example": "Read the sacred book of blob"

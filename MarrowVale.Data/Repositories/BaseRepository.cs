@@ -79,12 +79,13 @@ namespace MarrowVale.Data.Repositories
             T itemToUpdate = await this.GetById(newItem.Id);
             this.CopyValues(itemToUpdate, newItem);
 
-            await _graphClient.Cypher
+            var query = _graphClient.Cypher
                .Match($"({name}:{newItem.EntityLabel})")
-               .Where((T x) => x.Id == newItem.Id)
+               .Where((T e) => e.Id == newItem.Id)
                .Set(name + " = $item")
-               .WithParam("item", itemToUpdate)
-               .ExecuteWithoutResultsAsync();
+               .WithParam("item", itemToUpdate);
+
+            await query.ExecuteWithoutResultsAsync();
         }
 
         public virtual async Task Update(Expression<Func<T, bool>> query, T newItem)

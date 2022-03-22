@@ -128,55 +128,6 @@ namespace MarrowVale.Business.Services
             throw new NotImplementedException();
         }
 
-        public MarrowValeMessage OpenDoor(Player player, Command command)
-        {
-            var message = new MarrowValeMessage();
-            var door = _doorRepository.GetById(command.DirectObjectNode.Id).Result;
-            if (_doorRepository.IsDoorOpenable(player, door))
-            {
-                _doorRepository.OpenDoor(door);
-                message.ResultText = "Door Open PlaceHolder";
-            }
-            else
-            {
-                message.ErrorText = "Unable to open the door";
-            }
-
-            return message;
-        }
-
-        public MarrowValeMessage CloseDoor(Player player, Command command)
-        {
-            var message = new MarrowValeMessage();
-            var door = _doorRepository.GetById(command.DirectObjectNode.Id).Result;
-            if (_doorRepository.IsDoorCloseable(player, door))
-            {
-                _doorRepository.OpenDoor(door);
-                message.ResultText = "Door Close PlaceHolder";
-            }
-            else
-            {
-                message.ErrorText = "Unable to close the door";
-            }
-
-            return message;
-        }
-
-        public MarrowValeMessage BreakDoor(Player player, Command command)
-        {
-            throw new NotImplementedException();
-        }
-
-        public MarrowValeMessage UnlockDoor(Player player, Command command)
-        {
-            throw new NotImplementedException();
-        }
-
-        public MarrowValeMessage LockDoor(Player player, Command command)
-        {
-            throw new NotImplementedException();
-        }
-
 
 
         private Room enterDestination(Command command)

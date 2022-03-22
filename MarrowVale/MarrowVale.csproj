@@ -105,6 +105,18 @@
     <None Update="Game Tools\PromptFiles\DivineIntervention\Smite.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Game Tools\PromptFiles\InterpretCommand\Close.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Game Tools\PromptFiles\InterpretCommand\Unlock.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Game Tools\PromptFiles\InterpretCommand\Lock.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Game Tools\PromptFiles\InterpretCommand\Open.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Game Tools\PromptFiles\InterpretCommand\Drop.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
