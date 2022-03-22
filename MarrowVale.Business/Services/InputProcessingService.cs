@@ -2,15 +2,9 @@
 using MarrowVale.Business.Entities.Commands;
 using MarrowVale.Business.Entities.Entities;
 using MarrowVale.Business.Entities.Enums;
-using MarrowVale.Common.Contracts;
-using MarrowVale.Data.Contracts;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 
 namespace MarrowVale.Business.Services
 {
@@ -64,6 +58,12 @@ namespace MarrowVale.Business.Services
                 CommandEnum.Swim => throw new NotImplementedException(),
                 CommandEnum.Dance => throw new NotImplementedException(),
                 CommandEnum.Give => throw new NotImplementedException(),
+                CommandEnum.Take => directObjectCommand(input, context, player, command),
+                CommandEnum.Drop => directObjectCommand(input, context, player, command),
+                CommandEnum.Unlock => directObjectCommand(input, context, player, command),
+                CommandEnum.Lock => directObjectCommand(input, context, player, command),
+                CommandEnum.Open => directObjectCommand(input, context, player, command),
+                CommandEnum.Close => directObjectCommand(input, context, player, command),
                 CommandEnum.Equip => throw new NotImplementedException(),
                 CommandEnum.Use => throw new NotImplementedException(),
                 CommandEnum.Cast => throw new NotImplementedException(),

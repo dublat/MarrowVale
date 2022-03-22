@@ -20,10 +20,11 @@ namespace MarrowVale.Business.Services
         private readonly IDivineInterventionService _divineInterventionService;
         private readonly IPrintService _printService;
         private readonly INavigationService _navigationService;
+        private readonly IEnviornmentalInteractionService _enviornmentalInteractionService;
 
         public CommandProcessingService(IWorldContextService worldContextService, IPlayerRepository playerRepository, IDialogueService dialogueService,
                                         INpcRepository npcRepository, ILocationRepository locationRepository, ICombatService combatService, IDivineInterventionService divineInterventionService,
-                                        IPrintService printService, INavigationService navigationService)
+                                        IPrintService printService, INavigationService navigationService, IEnviornmentalInteractionService enviornmentalInteractionService)
         {
             _worldContextService = worldContextService;
             _playerRepository = playerRepository;
@@ -34,6 +35,7 @@ namespace MarrowVale.Business.Services
             _divineInterventionService = divineInterventionService;
             _printService = printService;
             _navigationService = navigationService;
+            _enviornmentalInteractionService = enviornmentalInteractionService;
         }
 
 
@@ -66,6 +68,12 @@ namespace MarrowVale.Business.Services
                 CommandEnum.Attack => attack(command, player),
                 CommandEnum.Exit => _navigationService.Exit(command, player),
                 CommandEnum.LookAround => _navigationService.CurrentLocationDescription(player),
+                CommandEnum.Take => _enviornmentalInteractionService.PickUpItem(command, player),
+                CommandEnum.Drop => _enviornmentalInteractionService.DropItem(command, player),
+                CommandEnum.Lock => _enviornmentalInteractionService.LockDoor(player, command),
+                CommandEnum.Unlock => _enviornmentalInteractionService.UnlockDoor(player, command),
+                CommandEnum.Open => _enviornmentalInteractionService.OpenDoor(player, command),
+                CommandEnum.Close => _enviornmentalInteractionService.CloseDoor(player, command),
                 _ => new MarrowValeMessage { ErrorText = "Command Is Not Mapped to a function" }
             };
 

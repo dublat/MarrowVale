@@ -1,5 +1,6 @@
 ﻿using MarrowVale.Business.Entities.Entities;
 using MarrowVale.Business.Entities.Entities.Graph;
+using MarrowVale.Business.Entities.Entities.Relationships;
 using MarrowVale.Common.Constants;
 using MarrowVale.Common.Contracts;
 using MarrowVale.Data.Contracts;
@@ -31,7 +32,11 @@ namespace MarrowVale.Data.Repositories
             if (npc == null || player == null)
                 return false;
 
-            return RelatedToAndFrom<Room, Player, GraphRelationship>(x => x.Id == npc.Id, z => true, y => y.Id == player.Id, new GraphRelationship(Relationships.Inside), new GraphRelationship(Relationships.At), relation2Out: false).ResultsAsync.Result.Any();
+            var inside = new GraphRelationship(RelationshipConstants.Inside);
+            inside.IsDirectedOut = true;
+            var at = new AtRelation { IsDirectedOut = false };
+
+            return RelatedToAndFrom<Room, Player, GraphRelationship>(x => x.Id == npc.Id, z => true, y => y.Id == player.Id, inside, at).ResultsAsync.Result.Any();
 
         }
 
@@ -113,8 +118,12 @@ namespace MarrowVale.Data.Repositories
 
         public Item SellItem(Npc npc, Player player, Item item, int price, int quantity = 1)
         {
+            var own = RelationshipConstants.Own;
+            var partOf = RelationshipConstants.PartOf;
+            var sells = RelationshipConstants.Sells;
+
             return _graphClient.Cypher
-                .Match("(p:Player)-[r1:OWNS]->(playerInventory:Inventory)-[r2:PARTOF]->(tradedItem:Item),(merchant:Character)-[r3:SELLS]->(merchantInventory:Inventory)")
+                .Match($"(p:Player)-[r1:{own}]->(playerInventory:Inventory)-[r2:{partOf}]->(tradedItem:Item),(merchant:Character)-[r3:{sells}]->(merchantInventory:Inventory)")
                 .Where((Player p) => p.Id == player.Id)
                 .AndWhere((Npc merchant) => merchant.Id == npc.Id)
                 .AndWhere((Item tradedItem) => tradedItem.Id == item.Id)
@@ -151,14 +160,15 @@ namespace MarrowVale.Data.Repositories
 
         public void SetCombatEquipment(Npc npc)
         {
-            var equipped = new GraphRelationship(Relationships.Equipped);
+            var equipped = new GraphRelationship(RelationshipConstants.Equipped, isDirectedOut: true);
+
             npc.Armor = RelatedTo<Armor, GraphRelationship>(x => x.Id == npc.Id, y => true, equipped).ResultsAsync.Result.FirstOrDefault();
             npc.Weapon = RelatedTo<Weapon, GraphRelationship>(x => x.Id == npc.Id, y => true, equipped).ResultsAsync.Result.FirstOrDefault();
         }
 
         public async void SaveCombatEquipment(Npc npc)
         {
-            var equipped = new GraphRelationship(Relationships.Equipped);
+            var equipped = new GraphRelationship(RelationshipConstants.Equipped);
             if (npc.Armor != null)
                 await AddAndRelate(x => x.Id == npc.Id, npc.Armor, equipped);
             if (npc.Weapon != null)

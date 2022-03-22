@@ -24,7 +24,10 @@ namespace MarrowVale.Business.Entities.Entities
         public IList<string> RelationshipLabel { get; set; }
         [JsonIgnore]
         public DateTimeOffset LastUpdated { get; set; }
+        [JsonIgnore]
         public string EntityLabel { get; set; }
+        [JsonIgnore]
+        public string Alias { get; set; }
 
         public virtual string FormattedLabels()
         {

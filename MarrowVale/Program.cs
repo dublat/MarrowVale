@@ -7,6 +7,7 @@ using MarrowVale.Data.Contracts;
 using MarrowVale.Data.Repositories;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Neo4j.Driver;
 using Neo4jClient;
 using System;
 
@@ -112,6 +113,7 @@ namespace MarrowVale
                 .AddTransient<IDivineInterventionService, DivineInterventionService>()
                 .AddTransient<IAiService, AiService>()
                 .AddTransient<IAiEvaluationService, AiEvaluationService>()
+                .AddTransient<IEnviornmentalInteractionService, EnviornmentalInteractionService>()
                 .AddTransient<INavigationService, NavigationService>();
         }
 
@@ -132,6 +134,8 @@ namespace MarrowVale
                 .AddSingleton<IDeityRepository, DeityRepository>()
                 .AddSingleton<IOpenAiSettingRepository, OpenAiSettingRepository>()
                 .AddSingleton<IOpenAiEvaluationRepository, OpenAiEvaluationRepository>()
+                .AddSingleton<IDoorRepository, DoorRepository>()
+                .AddSingleton<IItemRepository, ItemRepository>()
                 .AddSingleton<IPromptRepository, PromptRepository>();
         }
 
@@ -143,7 +147,7 @@ namespace MarrowVale
                 .AddSingleton<IOpenAiProvider, OpenAiProvider>()
                 .AddSingleton<IGraphClient>(context =>
                 {
-                    var graphClient = new GraphClient(new Uri("http://localhost:7474"),"test","test");
+                    var graphClient = new GraphClient(new Uri("http://localhost:7474"), "test", "test");
                     graphClient.ConnectAsync().Wait();
                     return graphClient;
                 });

@@ -1,0 +1,21 @@
+{
+  "description": "Player attempts to drop an item",
+  "useDescription": false,
+  "useExampleCount": 2,
+  "examples": [
+    {
+      "id": 1,
+      "rating": 1,
+      "input": "Drop the purple sword",
+      "output": "Purple Longsword"
+    },
+    {
+      "id": 2,
+      "rating": 1,
+      "input": "Drop the great axe",
+      "output": "Great Axe"
+    }
+  ],
+  "inputPrefix": "Input:",
+  "outputPrefix": "Object:"
+}}

@@ -70,5 +70,7 @@ namespace MarrowVale.Data.Contracts
         /// <typeparam name="T">The type of the entity.</typeparam>
         /// <param name="query">The query.</param>
         Task Delete(Expression<Func<T, bool>> query);
+
+        Task<T> GetChildrenById(string id);
     }
 }

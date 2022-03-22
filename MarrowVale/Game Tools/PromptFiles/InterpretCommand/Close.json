@@ -1,0 +1,21 @@
+{
+  "description": "Player attempts to close a door, window, or chest",
+  "useDescription": false,
+  "useExampleCount": 2,
+  "examples": [
+    {
+      "id": 1,
+      "rating": 1,
+      "input": "Close the ruby door",
+      "output": "Ruby Door"
+    },
+    {
+      "id": 2,
+      "rating": 1,
+      "input": "Close the window",
+      "output": "Window"
+    }
+  ],
+  "inputPrefix": "Input:",
+  "outputPrefix": "Object:"
+}

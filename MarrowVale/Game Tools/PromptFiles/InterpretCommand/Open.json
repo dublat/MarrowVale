@@ -1,0 +1,21 @@
+{
+  "description": "Player attempts to open a door, window, or chest",
+  "useDescription": false,
+  "useExampleCount": 2,
+  "examples": [
+    {
+      "id": 1,
+      "rating": 1,
+      "input": "Open the ruby door",
+      "output": "Ruby Door"
+    },
+    {
+      "id": 2,
+      "rating": 1,
+      "input": "Open the small chest",
+      "output": "Small Chest"
+    }
+  ],
+  "inputPrefix": "Input:",
+  "outputPrefix": "Object:"
+}

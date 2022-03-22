@@ -21,10 +21,12 @@ namespace MarrowVale.Business.Services
         private readonly IPromptService _promptService;
         private readonly IAiService _aiService;
         private readonly IBuildingRepository _buildingRepository;
+        private readonly IDoorRepository _doorRepository;
+        private readonly IItemRepository _itemRepository;
 
         public NavigationService(IPlayerRepository playerRepository, INpcRepository npcRepository, ILocationRepository locationRepository, 
-                                 IRoomRepository roomRepository, IPromptService promptService,
-                                 IAiService aiService, IBuildingRepository buildingRepository)
+                                 IRoomRepository roomRepository, IPromptService promptService,IAiService aiService, 
+                                 IBuildingRepository buildingRepository, IDoorRepository doorRepository, IItemRepository itemRepository)
         {
             _playerRepository = playerRepository;
             _npcRepository = npcRepository;
@@ -33,6 +35,8 @@ namespace MarrowVale.Business.Services
             _promptService = promptService;
             _aiService = aiService;
             _buildingRepository = buildingRepository;
+            _doorRepository = doorRepository;
+            _itemRepository = itemRepository;
         }
 
 
@@ -125,7 +129,8 @@ namespace MarrowVale.Business.Services
         }
 
 
-        public Room enterDestination(Command command)
+
+        private Room enterDestination(Command command)
         {
             var destinationId = command.DirectObjectNode.Id;
             var buildingEntity = "Building";
@@ -136,7 +141,7 @@ namespace MarrowVale.Business.Services
                 return _roomRepository.Single(x => x.Id == destinationId).Result;
         }
 
-        public Location exitDestination(Command command)
+        private Location exitDestination(Command command)
         {
             var destinationId = command.DirectObjectNode.Id;
             var buildingEntity = "Building";
@@ -148,7 +153,7 @@ namespace MarrowVale.Business.Services
         }
 
 
-        public Location pathDestination(Command command)
+        private Location pathDestination(Command command)
         {
             var destinationId = command.DirectObjectNode.Id;
             return _locationRepository.Single(x => x.Id == destinationId).Result;
@@ -215,7 +220,15 @@ namespace MarrowVale.Business.Services
             var connectingRoomOutput = _aiService.Complete(connectingRoomPrompt).Result;
 
 
-            return roomOutput + npcOutput + connectingRoomOutput;
+            var items = _itemRepository.GetItemsAtLocation(room.Id);
+            var itemsString = new StringBuilder("Items in room:");
+            foreach (var item in items)
+            {
+                itemsString.Append($"Name: {item.Name}");
+            }
+
+
+            return roomOutput + npcOutput + connectingRoomOutput + itemsString.ToString();
         }
 
         private string generateRoadFlavorText(Location road)
@@ -257,11 +270,6 @@ namespace MarrowVale.Business.Services
 
             return roomOutput + npcOutput;
         }
-
-
-
-
-
 
 
     }

@@ -1,6 +1,6 @@
 ﻿using MarrowVale.Business.Entities.Commands;
 using MarrowVale.Business.Entities.Entities;
-
+using MarrowVale.Business.Entities.Entities.PathObstacles;
 
 namespace MarrowVale.Business.Contracts
 {
@@ -15,5 +15,6 @@ namespace MarrowVale.Business.Contracts
         public string ClimbDown(Player player, Location location);
         public string FastTravel(Player player, Location location);
         public MarrowValeMessage CurrentLocationDescription(Player player);
+
     }
 }

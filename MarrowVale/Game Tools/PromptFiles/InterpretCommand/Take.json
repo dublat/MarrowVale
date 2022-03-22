@@ -1,0 +1,21 @@
+{
+  "description": "Player attempts to take an item",
+  "useDescription": false,
+  "useExampleCount": 2,
+  "examples": [
+    {
+      "id": 1,
+      "rating": 1,
+      "input": "Pick up the purple sword",
+      "output": "Purple Longsword"
+    },
+    {
+      "id": 2,
+      "rating": 1,
+      "input": "Take the great axe",
+      "output": "Great Axe"
+    }
+  ],
+  "inputPrefix": "Input:",
+  "outputPrefix": "Object:"
+}
