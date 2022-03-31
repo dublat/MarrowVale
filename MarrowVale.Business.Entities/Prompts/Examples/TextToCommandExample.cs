@@ -1,6 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using MarrowVale.Common.Prompts.Examples;
+using System.Collections.Generic;
 
-namespace MarrowVale.Common.Prompts.Examples
+namespace MarrowVale.Business.Entities.Prompts.Examples
 {
     public class TextToCommandExample : BaseExample
     {

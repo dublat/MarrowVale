@@ -1,8 +1,10 @@
-﻿using MarrowVale.Common.Prompts.Contracts;
+﻿using MarrowVale.Business.Entities.Prompts.Examples;
+using MarrowVale.Common.Prompts;
+using MarrowVale.Common.Prompts.Contracts;
 using MarrowVale.Common.Prompts.Examples;
 using System.Collections.Generic;
 
-namespace MarrowVale.Common.Prompts
+namespace MarrowVale.Business.Entities.Prompts
 {
     public class CombatPrompt : BasePrompt, INonStandardPrompt
     {

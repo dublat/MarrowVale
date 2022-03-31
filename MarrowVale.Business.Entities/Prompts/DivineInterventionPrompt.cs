@@ -1,12 +1,15 @@
-﻿using MarrowVale.Common.Prompts.Contracts;
+﻿using MarrowVale.Business.Entities.Prompts.Examples;
+using MarrowVale.Common.Prompts;
+using MarrowVale.Common.Prompts.Contracts;
 using MarrowVale.Common.Prompts.Examples;
 using System.Collections.Generic;
+using System.Text;
 
-namespace MarrowVale.Common.Prompts
+namespace MarrowVale.Business.Entities.Prompts
 {
-    public class SmitePrompt : BasePrompt, INonStandardPrompt
+    public class DivineInterventionPrompt : BasePrompt, INonStandardPrompt
     {
-        public List<SmiteExample> Examples { get; set; }
+        public List<DivineInterventionExample> Examples { get; set; }
 
         public override List<StandardExample> StandardizeExamples()
         {
@@ -19,8 +22,12 @@ namespace MarrowVale.Common.Prompts
                     Rating = example.Rating
                 };
 
-                standardExample.Input = $"Deity: {example.Deity}\nCharacter: {example.Enemy.Name} | Armor: {example.Enemy.Armor}";
                 standardExample.Output = example.Output;
+
+                var input = new StringBuilder();
+                input.AppendNewLine($"Action: {example.Action}");
+                input.AppendNewLine($"Error: {example.Error}");
+                standardExample.Input = input.ToString();
 
                 standardizedExamples.Add(standardExample);
             }

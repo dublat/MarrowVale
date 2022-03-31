@@ -1,9 +1,10 @@
-﻿using MarrowVale.Common.Prompts.Contracts;
+﻿using MarrowVale.Business.Entities.Examples;
+using MarrowVale.Common.Prompts.Contracts;
 using MarrowVale.Common.Prompts.Examples;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MarrowVale.Common.Prompts
+namespace MarrowVale.Business.Entities.Prompts
 {
     public class DialogueSummaryPrompt : BasePrompt, INonStandardPrompt
     {

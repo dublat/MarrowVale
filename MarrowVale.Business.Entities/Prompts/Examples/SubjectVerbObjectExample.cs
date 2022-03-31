@@ -1,6 +1,6 @@
-﻿
+﻿using MarrowVale.Common.Prompts.Examples;
 
-namespace MarrowVale.Common.Prompts.Examples
+namespace MarrowVale.Business.Entities.Prompts.Examples
 {
     public class SubjectVerbObjectExample : BaseExample
     {

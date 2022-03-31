@@ -1,6 +1,8 @@
 ﻿
 
-namespace MarrowVale.Common.Prompts.Examples
+using MarrowVale.Common.Prompts.Examples;
+
+namespace MarrowVale.Business.Entities.Prompts.Examples
 {
     public class DivineInterventionExample : BaseExample
     {
