@@ -42,127 +42,127 @@
     <None Update="Game Tools\DataFiles\CommandList.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\Combat\Attack\Melee\Minor.json">
+    <None Update="Game Tools\PromptLibrary\Combat\Attack\Melee\Minor.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\Combat\Attack\Spell\SpellKillDescription.json">
+    <None Update="Game Tools\PromptLibrary\Combat\Attack\Spell\SpellKillDescription.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\Combat\Attack\Spell\SpellAttackDescription.json">
+    <None Update="Game Tools\PromptLibrary\Combat\Attack\Spell\SpellAttackDescription.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\Combat\Attack\Melee\Miss.json">
+    <None Update="Game Tools\PromptLibrary\Combat\Attack\Melee\Miss.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\Combat\Attack\Melee\Kill.json">
+    <None Update="Game Tools\PromptLibrary\Combat\Attack\Melee\Kill.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\Combat\Defense\Melee\Minor.json">
+    <None Update="Game Tools\PromptLibrary\Combat\Defense\Melee\Minor.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\Combat\Defense\Melee\Kill.json">
+    <None Update="Game Tools\PromptLibrary\Combat\Defense\Melee\Kill.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\Combat\Defense\Melee\Miss.json">
+    <None Update="Game Tools\PromptLibrary\Combat\Defense\Melee\Miss.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\Combat\Defense\Spell\SpellAttackDescription.json">
+    <None Update="Game Tools\PromptLibrary\Combat\Defense\Spell\SpellAttackDescription.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\Combat\Defense\Spell\SpellKillDescription.json">
+    <None Update="Game Tools\PromptLibrary\Combat\Defense\Spell\SpellKillDescription.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\Combat\InterpretIntent.json">
+    <None Update="Game Tools\PromptLibrary\Combat\InterpretIntent.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\Dialogue\Confused.json">
+    <None Update="Game Tools\PromptLibrary\Dialogue\Confused.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\Dialogue\Attack.json">
+    <None Update="Game Tools\PromptLibrary\Dialogue\Attack.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\Dialogue\Farewell.json">
+    <None Update="Game Tools\PromptLibrary\Dialogue\Farewell.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\Dialogue\Answer.json">
+    <None Update="Game Tools\PromptLibrary\Dialogue\Answer.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\Dialogue\Statement.json">
+    <None Update="Game Tools\PromptLibrary\Dialogue\Statement.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\Dialogue\SummarizeConversation.json">
+    <None Update="Game Tools\PromptLibrary\Dialogue\SummarizeConversation.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\Dialogue\Introduction.json">
+    <None Update="Game Tools\PromptLibrary\Dialogue\Introduction.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\Dialogue\SVO\SubjectVerbObject.json">
+    <None Update="Game Tools\PromptLibrary\Dialogue\SVO\SubjectVerbObject.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\DivineIntervention\Explanation.json">
+    <None Update="Game Tools\PromptLibrary\DivineIntervention\Explanation.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\DivineIntervention\Smite.json">
+    <None Update="Game Tools\PromptLibrary\DivineIntervention\Smite.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\InterpretCommand\Close.json">
+    <None Update="Game Tools\PromptLibrary\InterpretCommand\Close.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\InterpretCommand\Unlock.json">
+    <None Update="Game Tools\PromptLibrary\InterpretCommand\Unlock.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\InterpretCommand\Lock.json">
+    <None Update="Game Tools\PromptLibrary\InterpretCommand\Lock.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\InterpretCommand\Open.json">
+    <None Update="Game Tools\PromptLibrary\InterpretCommand\Open.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\InterpretCommand\Drop.json">
+    <None Update="Game Tools\PromptLibrary\InterpretCommand\Drop.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\InterpretCommand\Take.json">
+    <None Update="Game Tools\PromptLibrary\InterpretCommand\Take.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\InterpretCommand\Sell.json">
+    <None Update="Game Tools\PromptLibrary\InterpretCommand\Sell.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\InterpretCommand\Purchase.json">
+    <None Update="Game Tools\PromptLibrary\InterpretCommand\Purchase.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\Summary\Road.json">
+    <None Update="Game Tools\PromptLibrary\Summary\Road.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\Dialogue\InterpretIntent.json">
+    <None Update="Game Tools\PromptLibrary\Dialogue\InterpretIntent.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\Summary\ConnectingRooms.json">
+    <None Update="Game Tools\PromptLibrary\Summary\ConnectingRooms.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\Summary\Room.json">
+    <None Update="Game Tools\PromptLibrary\Summary\Room.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\Summary\Npcs.json">
+    <None Update="Game Tools\PromptLibrary\Summary\Npcs.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\Summary\Location.json">
+    <None Update="Game Tools\PromptLibrary\Summary\Location.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\InterpretCommand\CommandList.json">
+    <None Update="Game Tools\PromptLibrary\InterpretCommand\CommandList.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\InterpretCommand\Exit.json">
+    <None Update="Game Tools\PromptLibrary\InterpretCommand\Exit.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\InterpretCommand\Speak.json">
+    <None Update="Game Tools\PromptLibrary\InterpretCommand\Speak.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\InterpretCommand\Attack.json">
+    <None Update="Game Tools\PromptLibrary\InterpretCommand\Attack.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\InterpretCommand\Enter.json">
+    <None Update="Game Tools\PromptLibrary\InterpretCommand\Enter.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Game Tools\PromptFiles\InterpretCommand\Traverse.json">
+    <None Update="Game Tools\PromptLibrary\InterpretCommand\Traverse.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Game Tools\DataFiles\PlayerList.json">
@@ -174,12 +174,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Game Tools\PromptFiles\Combat\Attack\Range\" />
-    <Folder Include="Game Tools\PromptFiles\Combat\Defense\Range\" />
-    <Folder Include="Game Tools\PromptFiles\Evaluation\" />
+    <Folder Include="Game Tools\PromptLibrary\Combat\Attack\Range\" />
+    <Folder Include="Game Tools\PromptLibrary\Combat\Defense\Range\" />
+    <Folder Include="Game Tools\PromptLibrary\Evaluation\" />
     <Folder Include="Game Tools\SoundFiles\" />
   </ItemGroup>
 
-  <ProjectExtensions><VisualStudio><UserProperties game_x0020_tools_4promptfiles_4summary_4connectingrooms_1json__JsonSchema=" " /></VisualStudio></ProjectExtensions>
+  <ProjectExtensions><VisualStudio><UserProperties /></VisualStudio></ProjectExtensions>
 
 </Project>
