@@ -1,4 +1,5 @@
 ﻿using MarrowVale.Business.Entities.Prompts.Examples;
+using MarrowVale.Common;
 using MarrowVale.Common.Prompts;
 using MarrowVale.Common.Prompts.Contracts;
 using MarrowVale.Common.Prompts.Examples;

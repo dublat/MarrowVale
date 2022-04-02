@@ -1,0 +1,48 @@
+{
+  "description": "A description about unlocking a door",
+  "useDescription": true,
+  "useExampleCount": 3,
+  "examples": [
+    {
+      "door": {
+        "Size": "Large",
+        "Material": "Copper",
+        "Color": "Red",
+        "LockingMechanism": "Key"
+      },
+      "key": {
+        "Color": "Purple",
+        "Material": "Purple Metal"
+      },
+      "output": "You insert the purple key into the key hole and twist.  The door is now unlocked"
+    },
+    {
+      "door": {
+        "Size": "Small",
+        "Material": "Glass",
+        "Color": "Clear",
+        "LockingMechanism": "Key"
+      },
+      "key": {
+        "Color": "Clear",
+        "Material": "Glass"
+      },
+      "output": "Using the glass key, you unlock the small glass door."
+    },
+    {
+      "door": {
+        "Size": "Medium",
+        "Material": "Wooden",
+        "Color": "Brown",
+        "LockingMechanism": "Key"
+      },
+      "key": {
+        "Color": "Red",
+        "Material": "Fire"
+      },
+      "output": "You put the key of fire into the door and twist.  Somehow that unlocks the wooden door without catching it on fire."
+    }
+  ],
+  "inputPrefix": "",
+  "outputPrefix": "Summary:"
+}

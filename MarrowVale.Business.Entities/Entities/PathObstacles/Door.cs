@@ -21,5 +21,11 @@ namespace MarrowVale.Business.Entities.Entities.PathObstacles
         public string Health { get; set; }
         public OntologyNode Material { get; set; }
 
+        public string Size()
+        {
+            //TODO Implement;
+            return "Small";
+        }
+
     }
 }

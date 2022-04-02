@@ -1,0 +1,36 @@
+{
+  "description": "A description about closing a door",
+  "useDescription": true,
+  "useExampleCount": 3,
+  "examples": [
+    {
+      "door": {
+        "Size": "Large",
+        "Material": "Copper",
+        "Color": "Red",
+        "OpeningMechanism": "DoorKnob"
+      },
+      "output": "Using force you pull the copper door shut"
+    },
+    {
+      "door": {
+        "Size": "Small",
+        "Material": "Glass",
+        "Color": "Clear",
+        "OpeningMechanism": "Push"
+      },
+      "output": "With little force you close the glass door.  That was easy."
+    },
+    {
+      "door": {
+        "Size": "Medium",
+        "Material": "Wooden",
+        "Color": "Brown",
+        "OpeningMechanism": "DoorKnob"
+      },
+      "output": "You pool the wooden door close"
+    }
+  ],
+  "inputPrefix": "",
+  "outputPrefix": "Summary:"
+}

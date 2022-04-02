@@ -105,6 +105,15 @@
     <None Update="Game Tools\PromptLibrary\DivineIntervention\Smite.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Game Tools\PromptLibrary\EnvironmentalAction\UnlockDoor.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Game Tools\PromptLibrary\EnvironmentalAction\LockDoor.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Game Tools\PromptLibrary\EnvironmentalAction\CloseDoor.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Game Tools\PromptLibrary\InterpretCommand\Close.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -127,6 +136,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Game Tools\PromptLibrary\InterpretCommand\Purchase.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Game Tools\PromptLibrary\EnvironmentalAction\OpenDoor.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Game Tools\PromptLibrary\Summary\Road.json">

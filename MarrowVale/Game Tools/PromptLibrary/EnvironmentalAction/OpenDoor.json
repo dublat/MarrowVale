@@ -1,0 +1,36 @@
+{
+  "description": "An interesting description about opening a door",
+  "useDescription": true,
+  "useExampleCount": 3,
+  "examples": [
+    {
+      "door": {
+        "Size": "Large",
+        "Material": "Copper",
+        "Color": "Red",
+        "OpeningMechanism": "DoorKnob"
+      },
+      "output": "You turn the door knob and push open the large copper door."
+    },
+    {
+      "door": {
+        "Size": "Small",
+        "Material": "Glass",
+        "Color": "Clear",
+        "OpeningMechanism": "Push"
+      },
+      "output": "You push open the small glass door gently as to not break the glass."
+    },
+    {
+      "door": {
+        "Size": "Medium",
+        "Material": "Wooden",
+        "Color": "Brown",
+        "OpeningMechanism": "DoorKnob"
+      },
+      "output": "You twist the doorknob and swing open the wooden door."
+    }
+  ],
+  "inputPrefix": "",
+  "outputPrefix": "Summary:"
+}
