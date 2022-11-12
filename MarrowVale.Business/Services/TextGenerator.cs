@@ -1,5 +1,6 @@
 ﻿using MarrowVale.Business.Contracts;
 using MarrowVale.Business.Entities.Entities;
+using MarrowVale.Common;
 using MarrowVale.Common.Contracts;
 using MarrowVale.Common.Providers;
 using System;
@@ -22,21 +23,20 @@ namespace MarrowVale.Business.Services
         public string GenerateCharacterDescription(Npc person)
         {
             StringBuilder sb = new StringBuilder();
-            sb.Append("This generates a random description off a character based off gender and occupation");
-            sb.Append("");
-            sb.Append($"Gender:{person.Gender}");
-            sb.Append($"Occupation:{person.Occupation}");
-            sb.Append($"Description:");
+            sb.AppendNewLine("This generates a random description off a character based off gender and occupation");
+            sb.AppendNewLine("");
+            sb.AppendNewLine($"Gender:{person.Gender}");
+            sb.AppendNewLine($"Occupation:{person.Occupation}");
+            sb.AppendNewLine($"Description:");
             return _aiService.Complete(sb.ToString()).Result;
         }
 
         public string GenerateCharacterName(Npc person)
         {
             StringBuilder sb = new StringBuilder();
-            sb.Append("This generates a name based off race and gender");
-            sb.Append("");
-            sb.Append($"Race:{person.Race.ToString()}");
-            sb.Append($"Gender:{person.Gender}");
+            sb.AppendNewLine("This generates a name based off race and gender");
+            sb.AppendNewLine($"Race:{person.Race.ToString()}");
+            sb.AppendNewLine($"Gender:{person.Gender}");
             sb.Append($"Name:");
             return _aiService.Complete(sb.ToString()).Result;
         }

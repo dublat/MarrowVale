@@ -35,7 +35,7 @@ namespace MarrowVale.Business.Services
             var isValidEnum = CommandEnum.TryParse(commandName, out CommandEnum commandEnum);
 
             if (!isValidEnum)
-                return tryAgain(context, player, input);
+                return parseCommandRetry(context, player, input);
 
             return CreateCommand(input, context, player, commandEnum);
 
@@ -46,6 +46,7 @@ namespace MarrowVale.Business.Services
             command switch
             {
                 CommandEnum.Inventory => directObjectCommand(input, context, player, command),
+                CommandEnum.LookAround => new Command(CommandEnum.LookAround),
                 CommandEnum.Enter => directObjectCommand(input, context, player, command),
                 CommandEnum.Exit => directObjectCommand(input, context, player, command),
                 CommandEnum.Traverse => directObjectCommand(input, context, player, command),
@@ -69,7 +70,7 @@ namespace MarrowVale.Business.Services
                 CommandEnum.Cast => throw new NotImplementedException(),
                 CommandEnum.Abilities => throw new NotImplementedException(),
                 //CommandEnum.Read => throw new NotImplementedException(),
-                _ => tryAgain(context, player, input)
+                _ => parseCommandRetry(context, player, input)
             };
 
 
@@ -89,8 +90,8 @@ namespace MarrowVale.Business.Services
                         _printService.PrintDivineText(divineResponse);
                         input = Console.ReadLine();
                     }
-                    else
-                        return new Command { Type = command, DirectObjectNode = node };
+                    
+                    return new Command { Type = command, DirectObjectNode = node };
                 }
                 catch
                 {
@@ -102,7 +103,7 @@ namespace MarrowVale.Business.Services
             }
         }
 
-        private Command tryAgain(string context, Player player, string input)
+        private Command parseCommandRetry(string context, Player player, string input)
         {
             var divineResponse = _divineInterventionService.HandleError(input, "Unexpected Command");
             _printService.PrintDivineText(divineResponse);
