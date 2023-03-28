@@ -168,7 +168,7 @@ namespace MarrowVale.Data.Repositories
 
         public async void SaveCombatEquipment(Npc npc)
         {
-            var equipped = new GraphRelationship(RelationshipConstants.Equipped);
+            var equipped = new GraphRelationship(RelationshipConstants.Equipped, isDirectedOut: true);
             if (npc.Armor != null)
                 await AddAndRelate(x => x.Id == npc.Id, npc.Armor, equipped);
             if (npc.Weapon != null)

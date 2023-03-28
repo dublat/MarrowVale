@@ -84,7 +84,7 @@ namespace MarrowVale.Data.Repositories
         public async Task CreatePrompts(PromptType promptType, string subType = null)
         {
 
-            await devToolDatabase()
+            var query = devToolDatabase()
             .Merge("(promptType:PromptType { Name: $name })")
             .OnCreate()
             .Set("promptType = $promptType")
@@ -92,8 +92,9 @@ namespace MarrowVale.Data.Repositories
             {
                 name = promptType.Name,
                 promptType
-            })
-            .ExecuteWithoutResultsAsync();
+            });
+
+            await query.ExecuteWithoutResultsAsync();
         }
 
 

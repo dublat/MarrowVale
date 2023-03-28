@@ -60,12 +60,13 @@ namespace MarrowVale.Business.Services
         {
             GraphNode node;
             try {
-                node = _graphClient.Cypher
+                var query = _graphClient.Cypher
                     .Match("(n)")
                     .Where((GraphNode n) => n.Name == searchTerm)
                     .With("{Id: n.Id, Name: n.Name, Description: n.Description, Labels: labels(n)} as generalNode")
-                    .Return(generalNode => generalNode.As<GraphNode>())
-                    .ResultsAsync.Result.FirstOrDefault();
+                    .Return(generalNode => generalNode.As<GraphNode>());
+
+                node = query.ResultsAsync.Result.FirstOrDefault();
 
                 if (node == null)
                     throw new Exception("No node found when searching direct object by name");

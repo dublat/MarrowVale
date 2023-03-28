@@ -47,6 +47,7 @@ namespace MarrowVale.Business.Services
             command switch
             {
                 CommandEnum.Inventory => directObjectCommand(input, context, player, command),
+                CommandEnum.LookAround => new Command(CommandEnum.LookAround),
                 CommandEnum.Enter => directObjectCommand(input, context, player, command),
                 CommandEnum.Exit => directObjectCommand(input, context, player, command),
                 CommandEnum.Traverse => directObjectCommand(input, context, player, command),
@@ -90,8 +91,8 @@ namespace MarrowVale.Business.Services
                         _printService.PrintDivineText(divineResponse);
                         input = _printService.ReadInput();
                     }
-                    else
-                        return new Command { Type = command, DirectObjectNode = node };
+                    
+                    return new Command { Type = command, DirectObjectNode = node };
                 }
                 catch
                 {
