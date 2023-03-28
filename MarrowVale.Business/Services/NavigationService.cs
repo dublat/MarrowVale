@@ -176,6 +176,7 @@ namespace MarrowVale.Business.Services
             }
             else if (currentLocationType.Contains("Room"))
             {
+
                 message.ResultText = generateRoomFlavorText(currentLocation);
             }
             else

@@ -84,7 +84,7 @@ namespace MarrowVale.Common.Providers
         {
             var api = new OpenAIAPI(apiKeys: apiKey);
 
-            completionRequest.Model ??= OpenAI_API.Models.Model.BabbageText;
+            completionRequest.Model = string.IsNullOrEmpty(completionRequest.Model) ? OpenAI_API.Models.Model.BabbageText : completionRequest.Model;
             var result = await api.Completions.CreateCompletionAsync(completionRequest);
             return result;
         }
