@@ -2,6 +2,7 @@
 using MarrowVale.Common.Evaluator;
 using MarrowVale.Common.Prompts;
 using OpenAI_API;
+using OpenAI_API.Completions;
 using System.Threading.Tasks;
 
 namespace MarrowVale.Business.Contracts

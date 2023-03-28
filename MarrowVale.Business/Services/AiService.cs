@@ -4,7 +4,10 @@ using MarrowVale.Common.Evaluator;
 using MarrowVale.Common.Prompts;
 using MarrowVale.Data.Contracts;
 using OpenAI_API;
+using OpenAI_API.Completions;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace MarrowVale.Business.Services
@@ -31,23 +34,26 @@ namespace MarrowVale.Business.Services
         //Refactor to use StandardPrompt
         public async Task<string> Complete(string prompt)
         {
-            return await _openAiProvider.Complete(prompt);
+            var request = new CompletionRequest(prompt, model: OpenAI_API.Models.Model.CurieText, temperature: 0.65, max_tokens: 35, frequencyPenalty: 0, presencePenalty: .6, stopSequences: stopOn);
+            var completionResult = await _openAiProvider.Complete(request);
+
+            return completionResult.Completions.First().Text;
         }
 
         public async Task<string> Complete(StandardPrompt prompt)
         {
             var settings = _openAiSettingRepository.GetSetting(prompt.Type, prompt.SubType);
             var completionRequest = createCompletionRequest(settings, prompt.ToString());
-            var result = await _openAiProvider.Complete(completionRequest, settings.EngineName);
+            var result = await _openAiProvider.Complete(completionRequest);
 
             var apiName = "Completion";
             await _aiEvaluatorService.CreateEvaluation(result, apiName, prompt, settings);
             return result.ToString();
         }
 
-        public async Task<string> Search(string query, string[] documents)
+        public async Task<string> Search(IEnumerable<string> documents, string searchTerm)
         {
-            return await _openAiProvider.Search(query, documents);
+            return await _openAiProvider.SemanticSearch(documents, searchTerm);
 
         }
 

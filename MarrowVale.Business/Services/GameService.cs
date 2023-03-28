@@ -48,7 +48,7 @@ namespace MarrowVale.Business.Services
             Game = _gameRepository.LoadGame(Player.GameSaveName);
         }
 
-        public void Start()
+        public async Task Start()
         {
             Console.Clear();
             var lookAround = new Command { Type = CommandEnum.LookAround };
@@ -60,8 +60,8 @@ namespace MarrowVale.Business.Services
                 if (playerInput == "QUIT")
                     break;
 
-                var command = _inputProcessingService.ProcessInput(playerInput, "", Player);
-                _commandProccesingService.ProcessCommand(command, Player);
+                var command = await _inputProcessingService.ProcessInput(playerInput, "", Player);
+                 _commandProccesingService.ProcessCommand(command, Player);
 
             }
         }

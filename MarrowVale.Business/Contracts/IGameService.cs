@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Threading.Tasks;
 
 namespace MarrowVale.Business.Contracts
 {
     public interface IGameService
     {
-        void Start();
+        Task Start();
     }
 }

@@ -5,6 +5,7 @@ using MarrowVale.Business.Entities.Enums;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace MarrowVale.Business.Services
 {
@@ -28,21 +29,21 @@ namespace MarrowVale.Business.Services
             _divineInterventionService = divineInterventionService;
         }
 
-        public Command ProcessInput(string input, string context, Player player)
+        public async Task<Command> ProcessInput(string input, string context, Player player)
         {
             var prompt = _promptService.CommandTypePrompt(input);
-            var commandName = _aiService.Complete(prompt).Result;
-            var isValidEnum = CommandEnum.TryParse(commandName, out CommandEnum commandEnum);
+            var commandName = await _aiService.Complete(prompt);
+            var isValidEnum = Enum.TryParse(commandName, out CommandEnum commandEnum);
 
             if (!isValidEnum)
-                return parseCommandRetry(context, player, input);
+                return await retryInput(context, player, input);
 
-            return CreateCommand(input, context, player, commandEnum);
+            return await CreateCommand(input, context, player, commandEnum);
 
         }
 
 
-        private Command CreateCommand(string input, string context, Player player, CommandEnum command) =>
+        private async Task<Command> CreateCommand(string input, string context, Player player, CommandEnum command) =>
             command switch
             {
                 CommandEnum.Inventory => directObjectCommand(input, context, player, command),
@@ -70,7 +71,7 @@ namespace MarrowVale.Business.Services
                 CommandEnum.Cast => throw new NotImplementedException(),
                 CommandEnum.Abilities => throw new NotImplementedException(),
                 //CommandEnum.Read => throw new NotImplementedException(),
-                _ => parseCommandRetry(context, player, input)
+                _ => await retryInput(context, player, input)
             };
 
 
@@ -88,7 +89,7 @@ namespace MarrowVale.Business.Services
                         var divineResponse = _divineInterventionService.HandleError(input, "Not found");
                         Debug.WriteLine("Direct Object Node Not Found");
                         _printService.PrintDivineText(divineResponse);
-                        input = Console.ReadLine();
+                        input = _printService.ReadInput();
                     }
                     
                     return new Command { Type = command, DirectObjectNode = node };
@@ -103,12 +104,12 @@ namespace MarrowVale.Business.Services
             }
         }
 
-        private Command parseCommandRetry(string context, Player player, string input)
+        private async Task<Command> retryInput(string context, Player player, string input)
         {
             var divineResponse = _divineInterventionService.HandleError(input, "Unexpected Command");
             _printService.PrintDivineText(divineResponse);
-            input = Console.ReadLine();
-            return ProcessInput(input, context, player);
+            input = _printService.ReadInput();
+            return await ProcessInput(input, context, player);
         }
 
     }

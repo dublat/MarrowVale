@@ -1,5 +1,5 @@
-﻿using MarrowVale.Common.Prompts;
-using OpenAI_API;
+﻿using OpenAI_API.Completions;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace MarrowVale.Common.Contracts
@@ -7,9 +7,8 @@ namespace MarrowVale.Common.Contracts
     public interface IOpenAiProvider
     {
         Task<string> BestMatch(string item, string options);
-        Task<string> Search(string query, string[] documents);
-        Task<string> Complete(string prompt);
-        Task<CompletionResult> Complete(CompletionRequest completionRequest, string engineName = "Curie");
+        Task<string> SemanticSearch(IEnumerable<string> documents, string searchTermtring);
+        Task<CompletionResult> Complete(CompletionRequest completionRequest);
 
     }
 }
