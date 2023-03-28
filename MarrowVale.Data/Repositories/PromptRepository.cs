@@ -1,8 +1,7 @@
 ﻿using MarrowVale.Business.Entities.Entities;
 using MarrowVale.Data.Contracts;
 using Neo4jClient;
-using Neo4jClient.Cypher;
-using OpenAI_API;
+using OpenAI_API.Completions;
 using System;
 using System.Linq;
 using System.Threading.Tasks;

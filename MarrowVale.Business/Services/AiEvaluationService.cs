@@ -3,11 +3,8 @@ using MarrowVale.Business.Entities.Entities;
 using MarrowVale.Common.Contracts;
 using MarrowVale.Common.Prompts;
 using MarrowVale.Data.Contracts;
-using Neo4jClient;
-using Neo4jClient.Cypher;
-using OpenAI_API;
+using OpenAI_API.Completions;
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace MarrowVale.Common.Evaluator
@@ -68,13 +65,13 @@ namespace MarrowVale.Common.Evaluator
         private decimal estimateCost(Evaluation evaluation)
         {
             decimal pricePerThousandTokens = 0;
-            if (evaluation.Engine == Engine.Ada)
+            if (evaluation.Engine == OpenAI_API.Models.Model.AdaText.ModelID)
                 pricePerThousandTokens = 0.0008m;
-            if (evaluation.Engine == Engine.Babbage)
+            if (evaluation.Engine == OpenAI_API.Models.Model.BabbageText.ModelID)
                 pricePerThousandTokens = 0.0008m;
-            if (evaluation.Engine == Engine.Curie)
+            if (evaluation.Engine == OpenAI_API.Models.Model.CurieText.ModelID)
                 pricePerThousandTokens = 0.0008m;
-            if (evaluation.Engine == Engine.Davinci)
+            if (evaluation.Engine == OpenAI_API.Models.Model.DavinciText.ModelID)
                 pricePerThousandTokens = 0.0008m;
 
             return evaluation.TokenCount * (pricePerThousandTokens / 1000);

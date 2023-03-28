@@ -24,7 +24,7 @@ namespace MarrowVale.Common.Evaluator
             this.Logprobs = logProbs;
             this.FrequencyPenalty = frequencyPenalty;
             this.PresencePenalty = presencePenalty;
-            this.EngineName = engineName ?? Engine.Babbage;
+            this.EngineName = engineName;
             //this.MultipleStopSequences = stopSequences;
         }
 

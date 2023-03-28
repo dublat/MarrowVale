@@ -19,29 +19,29 @@ namespace MarrowVale.Data.Seeder
         {
             var settingDictionary = new Dictionary<string, OpenAiSettings>();
 
-            var summarizationSettings = new OpenAiSettings(temperature: 0.5, max_tokens: 50, frequencyPenalty: .2, presencePenalty: 0, stopSequences: stopOn, engineName: Engine.Curie);
+            var summarizationSettings = new OpenAiSettings(temperature: 0.5, max_tokens: 50, frequencyPenalty: .2, presencePenalty: 0, stopSequences: stopOn, engineName: OpenAI_API.Models.Model.CurieText.ModelID);
             settingDictionary[PromptTypes.DialogueSummary] = summarizationSettings;
 
-            var dialogueIntentSettings = new OpenAiSettings(temperature: 0.1, max_tokens: 3, frequencyPenalty: 0, presencePenalty: 0, stopSequences: stopOn, top_p: 1, engineName: Engine.Babbage);
+            var dialogueIntentSettings = new OpenAiSettings(temperature: 0.1, max_tokens: 3, frequencyPenalty: 0, presencePenalty: 0, stopSequences: stopOn, top_p: 1, engineName: OpenAI_API.Models.Model.BabbageText.ModelID);
             settingDictionary[PromptTypes.DialogueIntent] = dialogueIntentSettings;
 
-            var dialogueResponseSetting = new OpenAiSettings(temperature: 0.65, max_tokens: 35, frequencyPenalty: 0, presencePenalty: .6, stopSequences: stopOn, engineName: Engine.Curie);
+            var dialogueResponseSetting = new OpenAiSettings(temperature: 0.65, max_tokens: 35, frequencyPenalty: 0, presencePenalty: .6, stopSequences: stopOn, engineName: OpenAI_API.Models.Model.CurieText.ModelID);
             settingDictionary[PromptTypes.DialogueResponse] = dialogueResponseSetting;
 
-            var summaryDescription = new OpenAiSettings(temperature: 0.18, max_tokens: 80, frequencyPenalty: .2, presencePenalty: 0, stopSequences: stopOn, engineName: Engine.Curie);
+            var summaryDescription = new OpenAiSettings(temperature: 0.18, max_tokens: 80, frequencyPenalty: .2, presencePenalty: 0, stopSequences: stopOn, engineName: OpenAI_API.Models.Model.CurieText.ModelID);
             settingDictionary[PromptTypes.SummaryDescription] = summaryDescription;
 
 
-            var combatIntentSetting = new OpenAiSettings(temperature: 0.1, max_tokens: 3, frequencyPenalty: 0, presencePenalty: 0, stopSequences: stopOn, top_p: 1, engineName: Engine.Babbage);
+            var combatIntentSetting = new OpenAiSettings(temperature: 0.1, max_tokens: 3, frequencyPenalty: 0, presencePenalty: 0, stopSequences: stopOn, top_p: 1, engineName: OpenAI_API.Models.Model.BabbageText.ModelID);
             settingDictionary[PromptTypes.CombatIntent] = combatIntentSetting;
 
-            var combatDescriptionSetting = new OpenAiSettings(temperature: 0.18, max_tokens: 80, frequencyPenalty: .2, presencePenalty: 0, stopSequences: stopOn, engineName: Engine.Curie);
+            var combatDescriptionSetting = new OpenAiSettings(temperature: 0.18, max_tokens: 80, frequencyPenalty: .2, presencePenalty: 0, stopSequences: stopOn, engineName: OpenAI_API.Models.Model.CurieText.ModelID);
             settingDictionary[PromptTypes.CombatDescription] = combatDescriptionSetting;
 
-            var textToCommandSetting = new OpenAiSettings(temperature: 0.65, max_tokens: 35, frequencyPenalty: 0, presencePenalty: .6, stopSequences: stopOn, engineName: Engine.Babbage);
+            var textToCommandSetting = new OpenAiSettings(temperature: 0.65, max_tokens: 35, frequencyPenalty: 0, presencePenalty: .6, stopSequences: stopOn, engineName: OpenAI_API.Models.Model.BabbageText.ModelID);
             settingDictionary[PromptTypes.TextToCommand] = textToCommandSetting;
 
-            var divineInterventionSetting = new OpenAiSettings(temperature: .8, max_tokens: 60, frequencyPenalty: 0, presencePenalty: .6, stopSequences: stopOn, engineName: Engine.Davinci);
+            var divineInterventionSetting = new OpenAiSettings(temperature: .8, max_tokens: 60, frequencyPenalty: 0, presencePenalty: .6, stopSequences: stopOn, engineName: OpenAI_API.Models.Model.CurieText.ModelID);
             settingDictionary[PromptTypes.DivineIntervention] = divineInterventionSetting;
 
             var defaultTemp = new OpenAiSettings(temperature: 0.18, max_tokens: 80, frequencyPenalty: .2, presencePenalty: 0, stopSequences: stopOn);

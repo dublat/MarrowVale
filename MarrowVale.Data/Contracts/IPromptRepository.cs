@@ -1,7 +1,5 @@
 ﻿using MarrowVale.Business.Entities.Entities;
-using OpenAI_API;
-using System;
-using System.Collections.Generic;
+using OpenAI_API.Completions;
 using System.Threading.Tasks;
 
 namespace MarrowVale.Data.Contracts

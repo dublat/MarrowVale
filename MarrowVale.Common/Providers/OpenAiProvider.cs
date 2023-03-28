@@ -1,12 +1,10 @@
-﻿using MarrowVale.Business.Entities.Prompts;
-using MarrowVale.Common.Contracts;
-using MarrowVale.Common.Models;
-using MarrowVale.Common.Prompts;
+﻿using MarrowVale.Common.Contracts;
 using Microsoft.Extensions.Logging;
 using OpenAI_API;
+using OpenAI_API.Completions;
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace MarrowVale.Common.Providers
@@ -30,28 +28,71 @@ namespace MarrowVale.Common.Providers
             throw new NotImplementedException();
         }
 
-        public async Task<string> Search(string query, string[] documents)
+        public async Task<string> SemanticSearch(string query, string documents)
         {
-            var api = new OpenAIAPI(engine: Engine.Davinci, apiKeys: apiKey);
-            var result = await api.Search.GetBestMatchAsync(query, documents);
+            var api = new OpenAIAPI(apiKey);
+            var result = await api.Embeddings.CreateEmbeddingAsync(documents);
             return result.ToString();
         }
 
-        public async Task<string> Complete(string text)
+        public async Task<string> SearchAsync(IEnumerable<string> documents, string searchTerm)
         {
-            var api = new OpenAIAPI(engine: Engine.Curie, apiKeys: apiKey);
-            var result = await api.Completions.CreateCompletionAsync(text, temperature: 0.65, max_tokens:35, frequencyPenalty:0, presencePenalty:.6, stopSequences: stopOn);
-            return result.ToString();
+            // Embed the search term
+            var api = new OpenAIAPI(apiKey);
+            float[] searchTermEmbedding = await api.Embeddings.GetEmbeddingsAsync(searchTerm);
+
+            // Embed all documents
+            List<float[]> documentEmbeddings = new List<float[]>();
+            foreach (string document in documents)
+            {
+                float[] documentEmbedding = await api.Embeddings.GetEmbeddingsAsync(document);
+                documentEmbeddings.Add(documentEmbedding);
+            }
+
+            // Calculate the cosine similarity between the search term and all documents
+            List<double> similarities = new List<double>();
+            for (int i = 0; i < documentEmbeddings.Count; i++)
+            {
+                double similarity = CosineSimilarity(searchTermEmbedding, documentEmbeddings[i]);
+                similarities.Add(similarity);
+            }
+
+            // Find the index of the most similar document
+            int mostSimilarIndex = similarities.IndexOf(similarities.Max());
+
+            // Return the most similar document
+            return documents.ElementAt(mostSimilarIndex);
         }
-        public async Task<CompletionResult> Complete(CompletionRequest completionRequest, string engineName = "Curie")
+
+        private double CosineSimilarity(float[] vec1, float[] vec2)
         {
-            var api = new OpenAIAPI(engine: engineName, apiKeys: apiKey);
+            double dotProduct = 0;
+            double vec1Magnitude = 0;
+            double vec2Magnitude = 0;
+
+            for (int i = 0; i < vec1.Length; i++)
+            {
+                dotProduct += vec1[i] * vec2[i];
+                vec1Magnitude += Math.Pow(vec1[i], 2);
+                vec2Magnitude += Math.Pow(vec2[i], 2);
+            }
+
+            return dotProduct / (Math.Sqrt(vec1Magnitude) * Math.Sqrt(vec2Magnitude));
+        }
+
+        public async Task<CompletionResult> Complete(CompletionRequest completionRequest)
+        {
+            var api = new OpenAIAPI(apiKeys: apiKey);
+
+            completionRequest.Model ??= OpenAI_API.Models.Model.BabbageText;
             var result = await api.Completions.CreateCompletionAsync(completionRequest);
             return result;
         }
 
-
-
+        public Task<string> SemanticSearch(IEnumerable<string> documents, string searchTermtring)
+        {
+            throw new NotImplementedException();
+        }
 
     }
 }

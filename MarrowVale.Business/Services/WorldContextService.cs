@@ -150,9 +150,9 @@ namespace MarrowVale.Business.Services
         public GraphNode ContextSearch(string searchTerm, string conversation)
         {
             var contextDictionary = ContextNodes.ToDictionary(x => $"{x.Name}: {x.Description}",x => x);
-            var documents = contextDictionary.Keys.ToArray();
+            var documents = contextDictionary.Keys;
             var query = $"{searchTerm}";
-            var resultKey = _aiService.Search(query, documents).Result;
+            var resultKey = _aiService.Search(documents, query).Result;
             return contextDictionary[resultKey];
         }
 
@@ -162,9 +162,9 @@ namespace MarrowVale.Business.Services
         {
             var contextDictionary = new Dictionary<string, GraphNode>();
             GetContextFromNode(knowledge, contextDictionary, "ARE", "YOU");
-            var documents = contextDictionary.Keys.ToArray();
+            var documents = contextDictionary.Keys;
             var query = $"{searchTerm}";
-            var resultKey = _aiService.Search(query, documents).Result;
+            var resultKey = _aiService.Search(documents, query).Result;
             return contextDictionary[resultKey];
         }
 

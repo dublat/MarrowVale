@@ -1,8 +1,6 @@
 ﻿using MarrowVale.Business.Entities.Commands;
 using MarrowVale.Business.Entities.Entities;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Threading.Tasks;
 
 namespace MarrowVale.Business.Contracts
 {
@@ -15,6 +13,6 @@ namespace MarrowVale.Business.Contracts
         /// <param name="context">Context for what the player may mention in the input</param>
         /// <param name="contextObject">Object that maps context to Graph Database.</param>
         /// <returns>A string response based on the outcome of the processing.  Needs to be implemented</returns>
-        Command ProcessInput(string input, string context, Player player);
+        Task<Command> ProcessInput(string input, string context, Player player);
     }
 }
