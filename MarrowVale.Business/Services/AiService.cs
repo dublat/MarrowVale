@@ -17,7 +17,7 @@ namespace MarrowVale.Business.Services
         private readonly IOpenAiProvider _openAiProvider;
         private readonly IAiEvaluationService _aiEvaluatorService;
         private readonly IOpenAiSettingRepository _openAiSettingRepository;
-        private readonly string[] stopOn = new string[] { "\n" };
+        private readonly string[] stopOn = new string[] { /*"\n"*/ };
 
         public AiService(IOpenAiProvider openAiProvider, IAiEvaluationService aiEvaluatorService, IOpenAiSettingRepository openAiSettingRepository)
         {
