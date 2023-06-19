@@ -31,7 +31,7 @@ namespace MarrowVale.Business.Services
 
         public async Task<Command> ProcessInput(string input, string context, Player player)
         {
-            var prompt = _promptService.CommandTypePrompt(input);
+            var prompt = _promptService.CommandTypePrompt(input);            
             var commandName = await _aiService.Complete(prompt);
             var isValidEnum = Enum.TryParse(commandName, out CommandEnum commandEnum);
 

@@ -1,4 +1,5 @@
 ﻿using MarrowVale.Common.Prompts;
+using OpenAI_API.Chat;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -10,6 +11,7 @@ namespace MarrowVale.Business.Contracts
         Task<string> Search(IEnumerable<string> documents, string searchTerm);
         Task<string> Complete(string prompt);
         Task<string> Complete(StandardPrompt prompt);
+        Task<(Conversation conversation, string response)> SendChat(string message, string systemMessage);
 
     }
 }

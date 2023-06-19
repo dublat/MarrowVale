@@ -12,7 +12,7 @@ namespace MarrowVale.Data.Contracts
     {
         Npc GetNpcByName(string firstName);
         bool IsPlayerNearby(Player player, Npc npc);
-        Conversation MemoryofPlayer(Npc npc);
+        ConversationNode MemoryofPlayer(Npc npc);
         void CreateMemory(Npc c, string s);
         IEnumerable<BaseRelationship> AllMemories(Npc npc);
         IEnumerable<Item> MerchantInventory(Npc npc);

@@ -1,6 +1,7 @@
 ﻿using MarrowVale.Common.Contracts;
 using Microsoft.Extensions.Logging;
 using OpenAI_API;
+using OpenAI_API.Chat;
 using OpenAI_API.Completions;
 using System;
 using System.Collections.Generic;
@@ -94,5 +95,17 @@ namespace MarrowVale.Common.Providers
             throw new NotImplementedException();
         }
 
+        public async Task<(Conversation conversation, string response)> SendMessage(ChatMessage userMessage, ChatMessage systemMessage, Conversation conversation = null)
+        {
+            var api = new OpenAIAPI(apiKeys: apiKey);
+
+            conversation ??= api.Chat.CreateConversation();
+
+            conversation.AppendMessage(systemMessage);
+            conversation.AppendMessage(userMessage);
+
+            var response = await conversation.GetResponseFromChatbotAsync();
+            return (conversation, response);
+        }
     }
 }

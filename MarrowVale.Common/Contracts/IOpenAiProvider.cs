@@ -1,4 +1,5 @@
-﻿using OpenAI_API.Completions;
+﻿using OpenAI_API.Chat;
+using OpenAI_API.Completions;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -9,6 +10,7 @@ namespace MarrowVale.Common.Contracts
         Task<string> BestMatch(string item, string options);
         Task<string> SemanticSearch(IEnumerable<string> documents, string searchTermtring);
         Task<CompletionResult> Complete(CompletionRequest completionRequest);
+        Task<(Conversation conversation, string response)> SendMessage(ChatMessage userMessage, ChatMessage systemMessage, Conversation conversation = null);
 
     }
 }

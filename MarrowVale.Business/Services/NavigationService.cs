@@ -4,10 +4,8 @@ using MarrowVale.Business.Entities.Entities;
 using MarrowVale.Business.Entities.Enums;
 using MarrowVale.Data.Contracts;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace MarrowVale.Business.Services
 {
@@ -50,11 +48,11 @@ namespace MarrowVale.Business.Services
         {
             var message = new MarrowValeMessage();
             var playerLocation = _playerRepository.GetPlayerLocation(player);
-            var roomDestination = enterDestination(command);
+            var roomDestination = EnterDestination(command);
             if (IsPathValid(playerLocation, roomDestination))
             {
                 _playerRepository.MovePlayer(player, playerLocation.Id, roomDestination.Id);
-                var roomDescription = generateRoomFlavorText(roomDestination);
+                var roomDescription = GenerateRoomFlavorText(roomDestination);
                 message.ResultText = roomDescription;
             }
             else
@@ -130,7 +128,7 @@ namespace MarrowVale.Business.Services
 
 
 
-        private Room enterDestination(Command command)
+        private Room EnterDestination(Command command)
         {
             var destinationId = command.DirectObjectNode.Id;
             var buildingEntity = "Building";
@@ -177,7 +175,7 @@ namespace MarrowVale.Business.Services
             else if (currentLocationType.Contains("Room"))
             {
 
-                message.ResultText = generateRoomFlavorText(currentLocation);
+                message.ResultText = GenerateRoomFlavorText(currentLocation);
             }
             else
             {
@@ -188,7 +186,7 @@ namespace MarrowVale.Business.Services
 
 
 
-        private string generateRoomFlavorText(Location room)
+        private string GenerateRoomFlavorText(Location room)
         {
             var input = room.DescriptionPromptInput();
             room.Description = input.ToString();
@@ -201,9 +199,12 @@ namespace MarrowVale.Business.Services
             var npcInput = new StringBuilder($"Location: {roomOutput}\n");
             foreach (var npc in peopleInsideRoom)
             {
-                npc.Description = npc.DescriptionPromptInput().ToString();
-                WorldContextService.ContextNodes.Add(npc);
-                npcInput.Append(npc.Description);
+                if (npc.Visible)
+                {
+                    npc.Description = npc.DescriptionPromptInput();
+                    WorldContextService.ContextNodes.Add(npc);
+                    npcInput.Append(npc.Description);
+                }
             }
 
             var npcPrompt = _promptService.GenerateSummaryDescription(npcInput.ToString(), SummaryTypeEnum.Npcs);
@@ -211,11 +212,11 @@ namespace MarrowVale.Business.Services
 
             var connectingRooms = _locationRepository.GetConnectingRooms(room);
             var connectingRoomsInput = new StringBuilder();
-            foreach (var r in connectingRooms)
+            foreach (var connectingRoom in connectingRooms)
             {
-                r.Description = r.ShortDescriptionPrompt().ToString();
-                WorldContextService.ContextNodes.Add(r);
-                connectingRoomsInput.Append(r.Description);
+                connectingRoom.Description = connectingRoom.ShortDescriptionPrompt().ToString();
+                WorldContextService.ContextNodes.Add(connectingRoom);
+                connectingRoomsInput.Append(connectingRoom.Description);
             }
             var connectingRoomPrompt = _promptService.GenerateSummaryDescription(connectingRoomsInput.ToString(), SummaryTypeEnum.ConnectingRooms);
             var connectingRoomOutput = _aiService.Complete(connectingRoomPrompt).Result;
@@ -227,7 +228,6 @@ namespace MarrowVale.Business.Services
             {
                 itemsString.Append($"Name: {item.Name}");
             }
-
 
             return roomOutput + npcOutput + connectingRoomOutput + itemsString.ToString();
         }

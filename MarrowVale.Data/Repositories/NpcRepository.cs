@@ -40,12 +40,12 @@ namespace MarrowVale.Data.Repositories
 
         }
 
-        public Conversation MemoryofPlayer(Npc npc)
+        public ConversationNode MemoryofPlayer(Npc npc)
         {
             return _graphClient.Cypher
                         .Match("(x:Character)-[:REMEMBERS]-(z:Conversation)-[:MENTIONS]-(y:Player)")
                         .Where((Npc x) => x.Id == npc.Id)
-                        .Return(z => z.As<Conversation>())
+                        .Return(z => z.As<ConversationNode>())
                         .ResultsAsync.Result.FirstOrDefault();
         }
 
@@ -136,7 +136,7 @@ namespace MarrowVale.Data.Repositories
 
         public void CreateMemory(Npc c, string s)
         {
-            var conversation = new Conversation { Id = Guid.NewGuid().ToString(), Summary = s };
+            var conversation = new ConversationNode { Id = Guid.NewGuid().ToString(), Summary = s };
 
             _graphClient.Cypher
                 .Create("(conversation:Conversation $x)")
@@ -146,13 +146,13 @@ namespace MarrowVale.Data.Repositories
             _graphClient.Cypher
                .Match("(npc:Character)", "(con:Conversation)")
                .Where((Npc npc) => npc.Id == c.Id)
-               .AndWhere((Conversation con) => con.Id == conversation.Id)
+               .AndWhere((ConversationNode con) => con.Id == conversation.Id)
                .Create("(npc)-[:MEMORY]->(con)")
                .ExecuteWithoutResultsAsync().Wait();
 
             _graphClient.Cypher
                .Match("(player:Player)", "(con:Conversation)")
-               .Where((Conversation con) => con.Id == conversation.Id)
+               .Where((ConversationNode con) => con.Id == conversation.Id)
                .Create($"(con)-[:MENTIONED]->(player)")
                .ExecuteWithoutResultsAsync().Wait();
 
