@@ -37,7 +37,7 @@ namespace MarrowVale.Business.Services
         {
             npc = await _npcRepository.GetById(npc.Id);
             var fullTextConverstaion = new StringBuilder();
-            var conversation = new Conversation();
+            Conversation conversation = null;
             bool conversationEnded = false;
             _printService.Print("");
 
@@ -60,7 +60,7 @@ namespace MarrowVale.Business.Services
                     break;
                 }
 
-                (conversation, var response) = await RespondToPlayer(playerText, npc, responseType, conversation);
+                (conversation, var response) = await RespondToPlayer(playerText, npc, responseType, fullTextConverstaion.ToString(), conversation);
 
                 if (responseType == DialogueResopnseTypeEnum.Farewell)
                     conversationEnded = true;
@@ -70,7 +70,7 @@ namespace MarrowVale.Business.Services
                 _printService.PrintDialogueResponse(npc, response);
             }
 
-            var summary = summarizeConverstion(conversation.ToString(), npc);
+            var summary = summarizeConverstion(fullTextConverstaion.ToString(), npc);
             await _npcRepository.CreateMemory(npc, summary);
         }
 
@@ -99,7 +99,7 @@ namespace MarrowVale.Business.Services
         }
 
 
-        private async Task<(Conversation conversation, string response)> RespondToPlayer(string playerText, Npc npc, DialogueResopnseTypeEnum responseType, string fullTextConversation, Conversation b n   )
+        private async Task<(Conversation conversation, string response)> RespondToPlayer(string playerText, Npc npc, DialogueResopnseTypeEnum responseType, string fullTextConversation, Conversation currentConversation)
         {
             var context = generateContext(fullTextConversation, npc, responseType);
             var character = (await _graphClient.Cypher
@@ -112,11 +112,11 @@ namespace MarrowVale.Business.Services
             input.AppendNewLine($"{character.FullName} is a {character.Sentiment} {character.Race} {character.Occupation}.  {context}");
             input.Append(fullTextConversation);
             var dialoguePrompt = _promptService.GenerateDialoguePrompt(input.ToString(), responseType, $"{character.FullName}:");
-            var systemMessage = dialoguePrompt;
+            var systemMessage = dialoguePrompt.ToString();
 
-            (conversation, var response) = await _aiService.SendChat(playerText, "Text", conversation);
+            (currentConversation, var response) = await _aiService.SendChat(playerText, systemMessage, currentConversation);
 
-            return (conversation, response);
+            return (currentConversation, response);
 
         }
 
