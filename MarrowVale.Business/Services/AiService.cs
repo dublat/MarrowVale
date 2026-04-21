@@ -1,11 +1,8 @@
 ﻿using MarrowVale.Business.Contracts;
-using MarrowVale.Business.Entities.Entities;
 using MarrowVale.Common.Contracts;
 using MarrowVale.Common.Evaluator;
 using MarrowVale.Common.Prompts;
 using MarrowVale.Data.Contracts;
-using NAudio.CoreAudioApi;
-using OpenAI_API;
 using OpenAI_API.Chat;
 using OpenAI_API.Completions;
 using System;
@@ -54,12 +51,12 @@ namespace MarrowVale.Business.Services
             return result.ToString();
         }
 
-        public async Task<(Conversation conversation, string response)> SendChat(string message, string systemMessage)
+        public async Task<(Conversation conversation, string response)> SendChat(string message, string systemMessage, Conversation conversation = null)
         {
             var userChatMessage = new ChatMessage { Content = message, Role = ChatMessageRole.User };
             var systemChatMessage = new ChatMessage { Content = systemMessage, Role = ChatMessageRole.System };
 
-            var (conversation, response) = await _openAiProvider.SendMessage(userChatMessage, systemChatMessage);
+            (conversation, var response) = await _openAiProvider.SendMessage(userChatMessage, systemChatMessage, conversation);
 
             var apiName = "Chat";
             //await _aiEvaluatorService.CreateEvaluation(result, apiName, prompt, settings); TO DO Add evaluator for Chat

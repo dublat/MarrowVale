@@ -2,15 +2,11 @@
 using MarrowVale.Business.Entities.Entities.Graph;
 using MarrowVale.Business.Entities.Entities.Relationships;
 using MarrowVale.Common.Constants;
-using MarrowVale.Common.Contracts;
 using MarrowVale.Data.Contracts;
-using Microsoft.Extensions.Logging;
 using Neo4jClient;
-using Neo4jClient.ApiModels.Cypher;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace MarrowVale.Data.Repositories
@@ -134,27 +130,27 @@ namespace MarrowVale.Data.Repositories
                 .Return(tradedItem => tradedItem.As<Item>()).ResultsAsync.Result.FirstOrDefault();
         }
 
-        public void CreateMemory(Npc c, string s)
+        public async Task CreateMemory(Npc c, string s)
         {
             var conversation = new ConversationNode { Id = Guid.NewGuid().ToString(), Summary = s };
 
-            _graphClient.Cypher
+            await _graphClient.Cypher
                 .Create("(conversation:Conversation $x)")
                 .WithParam("x", conversation)
-                .ExecuteWithoutResultsAsync().Wait();
+                .ExecuteWithoutResultsAsync();
 
-            _graphClient.Cypher
+            await _graphClient.Cypher
                .Match("(npc:Character)", "(con:Conversation)")
                .Where((Npc npc) => npc.Id == c.Id)
                .AndWhere((ConversationNode con) => con.Id == conversation.Id)
                .Create("(npc)-[:MEMORY]->(con)")
-               .ExecuteWithoutResultsAsync().Wait();
+               .ExecuteWithoutResultsAsync();
 
-            _graphClient.Cypher
+            await _graphClient.Cypher
                .Match("(player:Player)", "(con:Conversation)")
                .Where((ConversationNode con) => con.Id == conversation.Id)
                .Create($"(con)-[:MENTIONED]->(player)")
-               .ExecuteWithoutResultsAsync().Wait();
+               .ExecuteWithoutResultsAsync();
 
         }
 

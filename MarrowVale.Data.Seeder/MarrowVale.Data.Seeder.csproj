@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Neo4jClient" Version="5.1.6" />
+    <PackageReference Include="Neo4jClient" Version="5.1.11" />
   </ItemGroup>
 
   <ItemGroup>

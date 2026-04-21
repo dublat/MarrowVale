@@ -99,7 +99,12 @@ namespace MarrowVale.Common.Providers
         {
             var api = new OpenAIAPI(apiKeys: apiKey);
 
-            conversation ??= api.Chat.CreateConversation();
+            var chatRequest = new ChatRequest()
+            {
+                Model = OpenAI_API.Models.Model.GPT4
+            };
+
+            conversation ??= api.Chat.CreateConversation(chatRequest);
 
             conversation.AppendMessage(systemMessage);
             conversation.AppendMessage(userMessage);

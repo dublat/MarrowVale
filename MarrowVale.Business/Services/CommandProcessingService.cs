@@ -84,7 +84,7 @@ namespace MarrowVale.Business.Services
             var npc = _npcRepository.Single(x => x.Id == command.DirectObjectNode.Id).Result;
             if (isAbleToSpeakWith(player, npc))
             {
-                _dialogueService.Talk(player, npc);
+                _dialogueService.Converse(player, npc);
                 message.ResultText = "Conversation Over";
             }
             else

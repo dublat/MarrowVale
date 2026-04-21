@@ -2,11 +2,9 @@
 using MarrowVale.Business.Entities.Entities;
 using MarrowVale.Business.Entities.Enums;
 using MarrowVale.Common;
-using MarrowVale.Common.Contracts;
 using MarrowVale.Data.Contracts;
 using Neo4jClient;
-using System;
-using System.Collections.Generic;
+using OpenAI_API.Chat;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,7 +20,7 @@ namespace MarrowVale.Business.Services
         private readonly INpcRepository _npcRepository;
         private readonly IWorldContextService _worldContextService;
         private readonly INpcActionService _npcActionService;
-
+        
         public DialogueService(IAiService aiService, IGraphClient graphClient, IPromptService promptService, IPrintService printService, INpcRepository npcRepository,
                                 IWorldContextService worldContextService, INpcActionService npcActionService)
         {
@@ -35,20 +33,20 @@ namespace MarrowVale.Business.Services
             _npcActionService = npcActionService;
         }
 
-        public void Talk(Player player, Npc npc)
+        public async Task Converse(Player player, Npc npc)
         {
-            npc = _npcRepository.GetById(npc.Id).Result;
-            var conversation = new StringBuilder();
+            npc = await _npcRepository.GetById(npc.Id);
+            var fullTextConverstaion = new StringBuilder();
+            var conversation = new Conversation();
             bool conversationEnded = false;
             _printService.Print("");
 
             while (!conversationEnded)
             {
                 var playerText = _printService.ReadDialogue(player);
-                conversation.Append($"Player:{playerText}");
+                fullTextConverstaion.Append($"Player:{playerText}");
 
                 var responseType = DetermineReponseType(playerText);
-
 
                 if (responseType == DialogueResopnseTypeEnum.Purchase)
                 {
@@ -62,22 +60,18 @@ namespace MarrowVale.Business.Services
                     break;
                 }
 
-                string response;
-                if (responseType == DialogueResopnseTypeEnum.Answer)
-                    response = respondToPlayer(conversation.ToString(), npc, responseType);
-                else
-                    response = respondToPlayer(conversation.ToString(), npc, responseType);
+                (conversation, var response) = await RespondToPlayer(playerText, npc, responseType, conversation);
 
                 if (responseType == DialogueResopnseTypeEnum.Farewell)
                     conversationEnded = true;
 
-                conversation.AppendNewLine("");
-                conversation.AppendNewLine($"{npc.FullName}:{response}");
+                fullTextConverstaion.AppendNewLine(string.Empty);
+                fullTextConverstaion.AppendNewLine($"{npc.FullName}:{response}");
                 _printService.PrintDialogueResponse(npc, response);
             }
 
             var summary = summarizeConverstion(conversation.ToString(), npc);
-            _npcRepository.CreateMemory(npc, summary);
+            await _npcRepository.CreateMemory(npc, summary);
         }
 
         private DialogueResopnseTypeEnum DetermineReponseType(string text)
@@ -85,43 +79,44 @@ namespace MarrowVale.Business.Services
             var prompt = _promptService.GenerateDialogueIntentPrompt(text, DialogueTypeEnum.InterpretIntent);
             var responseType = _aiService.Complete(prompt).Result?.Trim()?.ToUpper();
 
-            if (responseType == DialogueResopnseTypeEnum.Question.ToString().ToUpper())
-                return DialogueResopnseTypeEnum.Answer;
-            else if (responseType == DialogueResopnseTypeEnum.Introduction.ToString().ToUpper())
-                return DialogueResopnseTypeEnum.Introduction;
-            else if (responseType == DialogueResopnseTypeEnum.Statement.ToString().ToUpper())
-                return DialogueResopnseTypeEnum.Statement;
-            else if (responseType == DialogueResopnseTypeEnum.Farewell.ToString().ToUpper())
-                return DialogueResopnseTypeEnum.Farewell;
-            else if (responseType == DialogueResopnseTypeEnum.Attack.ToString().ToUpper())
-                return DialogueResopnseTypeEnum.Attack;
-            else if (responseType == DialogueResopnseTypeEnum.Purchase.ToString().ToUpper())
-                return DialogueResopnseTypeEnum.Purchase;
-            else if (responseType == DialogueResopnseTypeEnum.Sell.ToString().ToUpper())
-                return DialogueResopnseTypeEnum.Sell;
-            else if (responseType == DialogueResopnseTypeEnum.Give.ToString().ToUpper())
-                return DialogueResopnseTypeEnum.Give;
-            else
-                return DialogueResopnseTypeEnum.Confused;
+            return responseType switch
+            {
+                var res when IsResponseOfType(res, DialogueResopnseTypeEnum.Question) => DialogueResopnseTypeEnum.Answer,
+                var res when IsResponseOfType(res, DialogueResopnseTypeEnum.Introduction) => DialogueResopnseTypeEnum.Introduction,
+                var res when IsResponseOfType(res, DialogueResopnseTypeEnum.Statement) => DialogueResopnseTypeEnum.Statement,
+                var res when IsResponseOfType(res, DialogueResopnseTypeEnum.Farewell) => DialogueResopnseTypeEnum.Farewell,
+                var res when IsResponseOfType(res, DialogueResopnseTypeEnum.Attack) => DialogueResopnseTypeEnum.Attack,
+                var res when IsResponseOfType(res, DialogueResopnseTypeEnum.Purchase) => DialogueResopnseTypeEnum.Purchase,
+                var res when IsResponseOfType(res, DialogueResopnseTypeEnum.Sell) => DialogueResopnseTypeEnum.Sell,
+                var res when IsResponseOfType(res, DialogueResopnseTypeEnum.Give) => DialogueResopnseTypeEnum.Give,
+                _ => DialogueResopnseTypeEnum.Confused
+            };
+        }
+
+        private bool IsResponseOfType(string responseType, DialogueResopnseTypeEnum dialogueResponseType)
+        {
+            return responseType == dialogueResponseType.ToString().ToUpper();
         }
 
 
-
-        private string respondToPlayer(string conversation, Npc c, DialogueResopnseTypeEnum responseType)
+        private async Task<(Conversation conversation, string response)> RespondToPlayer(string playerText, Npc npc, DialogueResopnseTypeEnum responseType, string fullTextConversation, Conversation b n   )
         {
-            var context = generateContext(conversation, c, responseType);
-            var character = _graphClient.Cypher
+            var context = generateContext(fullTextConversation, npc, responseType);
+            var character = (await _graphClient.Cypher
                                 .Match("(character:Character)")
-                                .Where((Npc character) => character.Name == c.Name)
+                                .Where((Npc character) => character.Name == npc.Name)
                                 .Return(character => character.As<Npc>())
-                                .ResultsAsync.Result.FirstOrDefault();
+                                .ResultsAsync).FirstOrDefault();
 
-            StringBuilder input = new StringBuilder();
-            input.AppendNewLine($"{character.FullName} is a {character.Sentiment.ToString()} {character.Race.ToString()} {character.Occupation.ToString()}.  {context}");
-            input.Append(conversation);
+            var input = new StringBuilder();
+            input.AppendNewLine($"{character.FullName} is a {character.Sentiment} {character.Race} {character.Occupation}.  {context}");
+            input.Append(fullTextConversation);
             var dialoguePrompt = _promptService.GenerateDialoguePrompt(input.ToString(), responseType, $"{character.FullName}:");
+            var systemMessage = dialoguePrompt;
 
-            return _aiService.Complete(dialoguePrompt).Result;
+            (conversation, var response) = await _aiService.SendChat(playerText, "Text", conversation);
+
+            return (conversation, response);
 
         }
 

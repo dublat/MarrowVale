@@ -11,7 +11,7 @@ namespace MarrowVale.Business.Contracts
         Task<string> Search(IEnumerable<string> documents, string searchTerm);
         Task<string> Complete(string prompt);
         Task<string> Complete(StandardPrompt prompt);
-        Task<(Conversation conversation, string response)> SendChat(string message, string systemMessage);
+        Task<(Conversation conversation, string response)> SendChat(string message, string systemMessage, Conversation conversation = null);
 
     }
 }
