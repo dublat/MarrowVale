@@ -1,4 +1,4 @@
-﻿using MarrowVale.Business.Entities.Entities;
+using MarrowVale.Business.Entities.Entities;
 using MarrowVale.Business.Entities.Entities.PathObstacles;
 using System.Threading.Tasks;
 
@@ -8,6 +8,7 @@ namespace MarrowVale.Data.Contracts
     {
         bool IsDoorOpenable(Player player, Door door);
         bool IsDoorCloseable(Player player, Door door);
+        Task<DoorKey> GetKey(Player player, Door door);
         Task<bool> HasKey(Player player, Door door);
         Task OpenDoor(Door door);
         Task CloseDoor(Door door);

@@ -1,4 +1,4 @@
-﻿using MarrowVale.Business.Entities.Entities;
+using MarrowVale.Business.Entities.Entities;
 using MarrowVale.Business.Entities.Entities.PathObstacles;
 using MarrowVale.Business.Entities.Entities.Relationships;
 using MarrowVale.Common.Constants;
@@ -57,28 +57,16 @@ namespace MarrowVale.Data.Repositories
             return true;
         }
 
-        public async Task<bool> IsDoorLockable(Player player, Door door)
-        {
-            var own = RelationshipConstants.Own;
-            var at = RelationshipConstants.At;
-            var partOf = RelationshipConstants.PartOf;
-            var unlocks = RelationshipConstants.Unlocks;
-
-            var query = _graphClient.Cypher
-                .Match($"(x:Player)-[r:{own}]->(inventory:Inventory)-[:{partOf}]->(:DoorKey)-[:{unlocks}]->(d:Door), (x)-[:{at}]->()-[:LEADS_TO]->(d)")
-                .Where((Player x) => x.Id == player.Id)
-                .AndWhere((Door d) => d.Id == door.Id)
-                .Return(x => x.As<Player>());
-
-            return (await query.ResultsAsync).Any();
-        }
+        public Task<bool> IsDoorLockable(Player player, Door door) => HasKey(player, door);
 
         public bool IsDoorOpenable(Player player, Door door)
         {
             throw new System.NotImplementedException();
         }
 
-        public async Task<bool> HasKey(Player player, Door door)
+        public async Task<bool> HasKey(Player player, Door door) => await GetKey(player, door) != null;
+
+        public async Task<DoorKey> GetKey(Player player, Door door)
         {
             var own = RelationshipConstants.Own;
             var at = RelationshipConstants.At;
@@ -86,12 +74,12 @@ namespace MarrowVale.Data.Repositories
             var unlocks = RelationshipConstants.Unlocks;
 
             var query = _graphClient.Cypher
-                .Match($"(x:Player)-[r:{own}]->(inventory:Inventory)-[:{partOf}]->(:DoorKey)-[:{unlocks}]->(d:Door), (x)-[:{at}]->()-[:LEADS_TO]->(d)")
+                .Match($"(x:Player)-[r:{own}]->(inventory:Inventory)-[:{partOf}]->(key:DoorKey)-[:{unlocks}]->(d:Door), (x)-[:{at}]->()-[:LEADS_TO]->(d)")
                 .Where((Player x) => x.Id == player.Id)
                 .AndWhere((Door d) => d.Id == door.Id)
-                .Return(x => x.As<Player>());
+                .Return(key => key.As<DoorKey>()).Limit(1);
 
-            return (await query.ResultsAsync).Any();
+            return (await query.ResultsAsync).FirstOrDefault();
         }
 
     }

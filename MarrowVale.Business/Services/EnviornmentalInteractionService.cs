@@ -1,12 +1,11 @@
-﻿using MarrowVale.Business.Contracts;
+using MarrowVale.Business.Contracts;
 using MarrowVale.Business.Entities.Commands;
 using MarrowVale.Business.Entities.Entities;
 using MarrowVale.Business.Entities.Enums;
 using MarrowVale.Data.Contracts;
 using System;
-using System.Collections.Generic;
+using MarrowVale.Business.Entities.Entities.PathObstacles;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace MarrowVale.Business.Services
@@ -19,9 +18,14 @@ namespace MarrowVale.Business.Services
         private readonly IDoorRepository _doorRepository;
         private readonly IItemRepository _itemRepository;
 
+        private readonly IPromptService _prompts;
+        private readonly IAiService _ai;
+
         public EnviornmentalInteractionService(IPlayerRepository playerRepository, ILocationRepository locationRepository, 
-                                 IDoorRepository doorRepository, IItemRepository itemRepository)
+                                 IDoorRepository doorRepository, IItemRepository itemRepository, IPromptService prompts, IAiService ai)
         {
+            _prompts = prompts;
+            _ai = ai;
             _playerRepository = playerRepository;
             _locationRepository = locationRepository;
             _doorRepository = doorRepository;
@@ -29,109 +33,60 @@ namespace MarrowVale.Business.Services
         }
 
    
-        public async Task<MarrowValeMessage> OpenDoor(Player player, Command command)
+        public Task<MarrowValeMessage> OpenDoor(Player player, Command command) =>
+            InteractWithDoor(player, command, CommandEnum.Open);
+
+        public Task<MarrowValeMessage> CloseDoor(Player player, Command command) =>
+            InteractWithDoor(player, command, CommandEnum.Close);
+
+        public Task<MarrowValeMessage> UnlockDoor(Player player, Command command) =>
+            InteractWithDoor(player, command, CommandEnum.Unlock);
+
+        public Task<MarrowValeMessage> LockDoor(Player player, Command command) =>
+            InteractWithDoor(player, command, CommandEnum.Lock);
+
+        private async Task<MarrowValeMessage> InteractWithDoor(Player player, Command command, CommandEnum action)
         {
-            var message = new MarrowValeMessage();
-            var door = await _doorRepository.GetById(command.DirectObjectNode.Id);
-
-            if (door.IsOpen)
+            var id = command?.DirectObjectNode?.Id;
+            var door = string.IsNullOrWhiteSpace(id) ? null : await _doorRepository.GetById(id);
+            var error = action switch
             {
-                message.ErrorText = "Door is already open placeholder";
-                return message;
-            }
-            else if (!door.IsUnlocked)
+                _ when door == null => "Door not found.",
+                CommandEnum.Open when door.IsOpen => "Door is already open.",
+                CommandEnum.Open when !door.IsUnlocked => "Door is locked.",
+                CommandEnum.Close when !door.IsOpen => "Door is already closed.",
+                CommandEnum.Close when !_doorRepository.IsDoorCloseable(player, door) => "Unable to close the door.",
+                CommandEnum.Lock or CommandEnum.Unlock when door.IsOpen => "Close the door first.",
+                CommandEnum.Lock when !door.IsUnlocked => "Door is already locked.",
+                CommandEnum.Unlock when door.IsUnlocked => "Door is already unlocked.",
+                _ => null
+            };
+            if (error != null)
+                return new MarrowValeMessage { ErrorText = error };
+
+            DoorKey key = null;
+            if (action is CommandEnum.Lock or CommandEnum.Unlock)
             {
-                message.ErrorText = "Door is locked placeholder";
-                return message;
-            }
-            //else if (!_doorRepository.IsDoorOpenable(player, door))
-            //{
-            //    message.ErrorText = "Unable to open the door";
-            //    return message;
-            //}
-
-            await _doorRepository.OpenDoor(door);
-            message.ResultText = "Door Open PlaceHolder";
-
-            return message;
-        }
-
-        public async Task<MarrowValeMessage> CloseDoor(Player player, Command command)
-        {
-            var message = new MarrowValeMessage();
-            var door = await _doorRepository.GetById(command.DirectObjectNode.Id);
-
-            if (!door.IsOpen)
-            {
-                message.ErrorText = "Door is already closed placeholder";
-                return message;
-            }
-            else if (!_doorRepository.IsDoorCloseable(player, door))
-            {
-                message.ErrorText = "Unable to close the door";
-                return message;
+                key = await _doorRepository.GetKey(player, door);
+                if (key == null)
+                    return new MarrowValeMessage { ErrorText = "You need the matching key." };
             }
 
-            await _doorRepository.CloseDoor(door);
-            message.ResultText = "Door Close PlaceHolder";
-            return message;
-        }
-
-
-        public async Task<MarrowValeMessage> UnlockDoor(Player player, Command command)
-        {
-            var message = new MarrowValeMessage();
-            var door = await _doorRepository.GetById(command.DirectObjectNode.Id);
-
-            if (door.IsOpen)
+            var narration = await _ai.Complete(_prompts.GenerateDoorActionPrompt(action, door, key));
+            if (action == CommandEnum.Open)
+                await _doorRepository.OpenDoor(door);
+            else if (action == CommandEnum.Close)
+                await _doorRepository.CloseDoor(door);
+            else
             {
-                message.ErrorText = "Can not unlock open door placeholder";
-                return message;
-            }
-            else if (door.IsUnlocked)
-            {
-                message.ErrorText = "Door is already unlocked placeholder";
-                return message;
-            }
-            else if (!await _doorRepository.HasKey(player, door))
-            {
-                message.ErrorText = "Unable to unlock the door";
-                return message;
+                door.IsUnlocked = action == CommandEnum.Unlock;
+                await _doorRepository.Update(door);
             }
 
-            door.IsUnlocked = true;
-            await _doorRepository.Update(door);
-            message.ResultText = "Door unlocked PlaceHolder";
-
-            return message;
-        }
-
-        public async Task<MarrowValeMessage> LockDoor(Player player, Command command)
-        {
-            var message = new MarrowValeMessage();
-            var door = await _doorRepository.GetById(command.DirectObjectNode.Id);
-
-            if (door.IsOpen)
+            return new MarrowValeMessage
             {
-                message.ErrorText = "Can not lock open door placeholder";
-                return message;
-            }
-            else if (!door.IsUnlocked)
-            {
-                message.ErrorText = "Door is already locked placeholder";
-                return message;
-            }
-            else if (!await _doorRepository.HasKey(player, door))
-            {
-                message.ErrorText = "Unable to lock the door";
-                return message;
-            }
-
-            door.IsUnlocked = false;
-            await _doorRepository.Update(door);
-            message.ResultText = "Door locked PlaceHolder";
-
-            return message;
+                ResultText = string.IsNullOrWhiteSpace(narration) ? $"You {action.ToString().ToLowerInvariant()} the door." : narration
+            };
         }
 
         public MarrowValeMessage BreakDoor(Player player, Command command)

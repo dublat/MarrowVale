@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,6 +10,7 @@ namespace MarrowVale.Common.Constants
     {
         public static readonly string DialogueSummary = "Dialogue Summary";
         public static readonly string DialogueIntent = "Dialogue Intent";
+        public const string EnvironmentalAction = "Environmental Action";
         public static readonly string CombatIntent = "Combat Intent";
         public static readonly string CombatDescription = "Combat Description";
         public static readonly string DialogueResponse = "Dialogue Response";

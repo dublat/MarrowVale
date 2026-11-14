@@ -39,6 +39,71 @@ public class GameFlowTests
     }
 
     [Theory]
+    [InlineData(CommandEnum.Open)]
+    [InlineData(CommandEnum.Close)]
+    [InlineData(CommandEnum.Lock)]
+    [InlineData(CommandEnum.Unlock)]
+    public async Task SuccessfulDoorActionUsesLibraryAndWorldData(CommandEnum action)
+    {
+        var player = new Player();
+        var door = new Door { Id = "gate", Name = "Garden gate", IsOpen = action == CommandEnum.Close,
+            IsUnlocked = action != CommandEnum.Unlock };
+        var key = new DoorKey { Name = "Caretaker's key" };
+        var doors = new Mock<IDoorRepository>();
+        doors.Setup(d => d.GetById(door.Id)).ReturnsAsync(door);
+        doors.Setup(d => d.IsDoorCloseable(player, door)).Returns(true);
+        doors.Setup(d => d.GetKey(player, door)).ReturnsAsync(key);
+        var settings = Mock.Of<IAppSettingsProvider>(s => s.BasePromptFileLocation == AppContext.BaseDirectory);
+        var prompts = new PromptService(NullLoggerFactory.Instance, settings, null);
+        var ai = new Mock<IAiService>(MockBehavior.Strict);
+        ai.Setup(a => a.Complete(It.IsAny<StandardPrompt>())).ReturnsAsync((StandardPrompt prompt) =>
+        {
+            Assert.Equal(action + "Door", prompt.SubType);
+            Assert.Equal("Environmental Action", prompt.Type);
+            Assert.Contains(door.Name, prompt.Input);
+            Assert.Equal(action is CommandEnum.Lock or CommandEnum.Unlock, prompt.Input.Contains(key.Name));
+            Assert.Equal(3, prompt.Examples.Count);
+            Assert.Contains(prompt.Examples[0].Output, prompt.ToString());
+            return "The gate creaks.";
+        });
+        var service = new EnviornmentalInteractionService(null, null, doors.Object, null, prompts, ai.Object);
+        var command = new Command { DirectObjectNode = door };
+        var result = await (action switch
+        {
+            CommandEnum.Open => service.OpenDoor(player, command),
+            CommandEnum.Close => service.CloseDoor(player, command),
+            CommandEnum.Lock => service.LockDoor(player, command),
+            _ => service.UnlockDoor(player, command)
+        });
+        Assert.Equal("The gate creaks.", result.ResultText);
+        if (action is CommandEnum.Lock or CommandEnum.Unlock)
+        {
+            doors.Verify(d => d.Update(door), Times.Once);
+            Assert.Equal(action == CommandEnum.Unlock, door.IsUnlocked);
+        }
+        else if (action == CommandEnum.Open)
+            doors.Verify(d => d.OpenDoor(door), Times.Once);
+        else
+            doors.Verify(d => d.CloseDoor(door), Times.Once);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task MissingKeyPreventsLockChangesAndNarration(bool unlocked)
+    {
+        var door = new Door { Id = "gate", IsUnlocked = unlocked };
+        var doors = new Mock<IDoorRepository>();
+        doors.Setup(d => d.GetById(door.Id)).ReturnsAsync(door);
+        var service = new EnviornmentalInteractionService(null, null, doors.Object, null,
+            new Mock<IPromptService>(MockBehavior.Strict).Object, new Mock<IAiService>(MockBehavior.Strict).Object);
+        var command = new Command { DirectObjectNode = door };
+        var result = unlocked ? await service.LockDoor(new Player(), command) : await service.UnlockDoor(new Player(), command);
+        Assert.Contains("key", result.ErrorText);
+        doors.Verify(d => d.Update(door), Times.Never);
+        Assert.Equal(unlocked, door.IsUnlocked);
+    }
+    [Theory]
     [InlineData(false)]
     [InlineData(true)]
     public async Task OpenHonorsDoorLock(bool unlocked)
@@ -46,7 +111,7 @@ public class GameFlowTests
         var door = new Door { Id = "door", IsUnlocked = unlocked };
         var doors = new Mock<IDoorRepository>();
         doors.Setup(d => d.GetById(door.Id)).ReturnsAsync(door);
-        var service = new EnviornmentalInteractionService(null, null, doors.Object, null);
+        var service = new EnviornmentalInteractionService(null, null, doors.Object, null, Mock.Of<IPromptService>(), Mock.Of<IAiService>());
         var message = await service.OpenDoor(new Player(), new Command { DirectObjectNode = door });
         doors.Verify(d => d.OpenDoor(door), unlocked ? Times.Once() : Times.Never());
         Assert.Equal(unlocked, !string.IsNullOrEmpty(message.ResultText));

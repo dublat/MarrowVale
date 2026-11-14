@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="..\MarrowVale\Game Tools\PromptLibrary\EnvironmentalAction\*.json" Link="EnvironmentalAction\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <ProjectReference Include="..\MarrowVale.Business\MarrowVale.Business.csproj" />
   </ItemGroup>
 

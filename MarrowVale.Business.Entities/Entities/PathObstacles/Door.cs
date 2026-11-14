@@ -1,4 +1,4 @@
-﻿using MarrowVale.Business.Entities.Entities.Graph;
+using MarrowVale.Business.Entities.Entities.Graph;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,11 +21,10 @@ namespace MarrowVale.Business.Entities.Entities.PathObstacles
         public string Health { get; set; }
         public OntologyNode Material { get; set; }
 
-        public string Size()
-        {
-            //TODO Implement;
-            return "Small";
-        }
+        public string Color { get; set; }
+        public string OpeningMechanism { get; set; }
+        public string LockingMechanism { get; set; }
 
+        public string Size() => Width > 0 && Height > 0 ? $"{Width} x {Height}" : null;
     }
 }

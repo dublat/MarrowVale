@@ -1,4 +1,5 @@
-﻿using MarrowVale.Business.Contracts;
+using MarrowVale.Business.Entities.Entities.PathObstacles;
+using MarrowVale.Business.Contracts;
 using MarrowVale.Business.Entities.Entities;
 using MarrowVale.Business.Entities.Enums;
 using MarrowVale.Business.Entities.Enums.Combat;
@@ -47,6 +48,13 @@ namespace MarrowVale.Business.Services
             };
         }
 
+
+        public StandardPrompt GenerateDoorActionPrompt(CommandEnum action, Door door, DoorKey key)
+        {
+            var subtype = action + "Door";
+            var file = Path.Combine(_appSettingsProvider.BasePromptFileLocation, "EnvironmentalAction", subtype + jsonExtension);
+            return generateStandardPrompt<DoorActionPrompt>(DoorActionPrompt.InputFor(action, door, key), file, PromptTypes.EnvironmentalAction, subtype);
+        }
 
         public StandardPrompt CommandTypePrompt(string command)
         {

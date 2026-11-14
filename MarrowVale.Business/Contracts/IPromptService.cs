@@ -1,4 +1,5 @@
-﻿using MarrowVale.Business.Entities.Enums;
+using MarrowVale.Business.Entities.Entities.PathObstacles;
+using MarrowVale.Business.Entities.Enums;
 using MarrowVale.Business.Entities.Enums.Combat;
 using MarrowVale.Business.Entities.Prompts;
 using MarrowVale.Common.Prompts;
@@ -23,6 +24,7 @@ namespace MarrowVale.Business.Contracts
         StandardPrompt GenerateDivineText(string text);
         StandardPrompt GenerateSmiteText(string text);
         StandardPrompt GenerateSummaryDescription(string text, SummaryTypeEnum summaryType);
+        StandardPrompt GenerateDoorActionPrompt(CommandEnum action, Door door, DoorKey key);
         StandardPrompt CommandTypePrompt(string command);
 
     }
