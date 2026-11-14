@@ -1,12 +1,13 @@
-﻿using MarrowVale.Business.Entities.Dtos;
+﻿using System.Threading.Tasks;
+using MarrowVale.Business.Entities.Dtos;
 using MarrowVale.Business.Entities.Entities;
 
 namespace MarrowVale.Business.Contracts
 {
     public interface ICharacterService
     {
-        Player NewCharacter();
-        Player LoadCharacter();
-        Inventory GetInventory(Player player);
+        Task<Player> NewCharacter();
+        Task<Player> LoadCharacter();
+        Task<Inventory> GetInventory(Player player);
     }
 }

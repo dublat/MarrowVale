@@ -1,6 +1,5 @@
 ﻿using MarrowVale.Business.Entities.Entities;
 using MarrowVale.Common.Prompts;
-using OpenAI_API;
 using System;
 using System.Collections.Generic;
 using System.Linq;

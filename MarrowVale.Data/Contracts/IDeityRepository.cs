@@ -10,7 +10,7 @@ namespace MarrowVale.Data.Contracts
 {
     public interface IDeityRepository : IBaseRepository<Deity>
     {
-        Deity DefaultDeity();
+        Task<Deity> DefaultDeity();
 
 
     }

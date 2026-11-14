@@ -5,6 +5,7 @@ using MarrowVale.Business.Entities.Enums;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace MarrowVale.Business.Services
 {
@@ -28,87 +29,35 @@ namespace MarrowVale.Business.Services
             _divineInterventionService = divineInterventionService;
         }
 
-        public Command ProcessInput(string input, string context, Player player)
+        public async Task<Command> ProcessInput(string input, string context, Player player)
         {
-            var prompt = _promptService.CommandTypePrompt(input);
-            var commandName = _aiService.Complete(prompt).Result;
-            var isValidEnum = CommandEnum.TryParse(commandName, out CommandEnum commandEnum);
-
-            if (!isValidEnum)
-                return tryAgain(context, player, input);
-
-            return CreateCommand(input, context, player, commandEnum);
-
-        }
-
-
-        private Command CreateCommand(string input, string context, Player player, CommandEnum command) =>
-            command switch
+            var prompt = _promptService.CommandTypePrompt(input);            
+            var commandName = await _aiService.Complete(prompt);
+            var name = commandName?.Trim();
+            if (!Enum.TryParse(name, true, out CommandEnum command) ||
+                !Enum.IsDefined(command) || !string.Equals(command.ToString(), name, StringComparison.OrdinalIgnoreCase))
             {
-                CommandEnum.Inventory => directObjectCommand(input, context, player, command),
-                CommandEnum.Enter => directObjectCommand(input, context, player, command),
-                CommandEnum.Exit => directObjectCommand(input, context, player, command),
-                CommandEnum.Traverse => directObjectCommand(input, context, player, command),
-                CommandEnum.Attack => directObjectCommand(input, context, player, command),
-                CommandEnum.Speak => directObjectCommand(input, context, player, command),
-                CommandEnum.Health => new Command(CommandEnum.Health),
-                CommandEnum.MoveToward => throw new NotImplementedException(),
-                CommandEnum.ClimbUp => throw new NotImplementedException(),
-                CommandEnum.ClimbDown => throw new NotImplementedException(),
-                CommandEnum.Swim => throw new NotImplementedException(),
-                CommandEnum.Dance => throw new NotImplementedException(),
-                CommandEnum.Give => throw new NotImplementedException(),
-                CommandEnum.Take => directObjectCommand(input, context, player, command),
-                CommandEnum.Drop => directObjectCommand(input, context, player, command),
-                CommandEnum.Unlock => directObjectCommand(input, context, player, command),
-                CommandEnum.Lock => directObjectCommand(input, context, player, command),
-                CommandEnum.Open => directObjectCommand(input, context, player, command),
-                CommandEnum.Close => directObjectCommand(input, context, player, command),
-                CommandEnum.Equip => throw new NotImplementedException(),
-                CommandEnum.Use => throw new NotImplementedException(),
-                CommandEnum.Cast => throw new NotImplementedException(),
-                CommandEnum.Abilities => throw new NotImplementedException(),
-                //CommandEnum.Read => throw new NotImplementedException(),
-                _ => tryAgain(context, player, input)
-            };
-
-
-        private Command directObjectCommand(string input, string context, Player player, CommandEnum command)
-        {
-            while (true)
-            {
-                try
-                {
-                    var prompt = _promptService.GenerateDirectObjectPrompt(input, command);
-                    var directObject = _aiService.Complete(prompt.ToString()).Result;
-                    var node = _worldContextService.GetObjectLabelIdPair(directObject, player, input);
-                    if (string.IsNullOrWhiteSpace(node?.Id))
-                    {
-                        var divineResponse = _divineInterventionService.HandleError(input, "Not found");
-                        Debug.WriteLine("Direct Object Node Not Found");
-                        _printService.PrintDivineText(divineResponse);
-                        input = Console.ReadLine();
-                    }
-                    else
-                        return new Command { Type = command, DirectObjectNode = node };
-                }
-                catch
-                {
-                    var divineResponse = _divineInterventionService.HandleError(input, "Unexpected Error");
-                    _printService.PrintDivineText(divineResponse);
-                    input = _printService.ReadInput();
-                }
-
+                _printService.Print("Unrecognized command.");
+                return null;
             }
+            if (command is CommandEnum.Health or CommandEnum.LookAround or CommandEnum.Inventory)
+                return new Command(command);
+            if (command is CommandEnum.Enter or CommandEnum.Exit or CommandEnum.Traverse or CommandEnum.Attack
+                or CommandEnum.Speak or CommandEnum.Take or CommandEnum.Drop or CommandEnum.Unlock
+                or CommandEnum.Lock or CommandEnum.Open or CommandEnum.Close)
+            {
+                var objectPrompt = _promptService.GenerateDirectObjectPrompt(input, command);
+                var target = await _aiService.Complete(objectPrompt.ToString());
+                var node = await _worldContextService.GetObjectLabelIdPair(target.Trim(), player, input);
+                if (string.IsNullOrWhiteSpace(node?.Id))
+                {
+                    _printService.PrintDivineText(await _divineInterventionService.HandleError(input, "Not found"));
+                    return null;
+                }
+                return new Command { Type = command, DirectObjectNode = node, Input = input };
+            }
+            _printService.Print($"{command} is unavailable.");
+            return null;
         }
-
-        private Command tryAgain(string context, Player player, string input)
-        {
-            var divineResponse = _divineInterventionService.HandleError(input, "Unexpected Command");
-            _printService.PrintDivineText(divineResponse);
-            input = Console.ReadLine();
-            return ProcessInput(input, context, player);
-        }
-
     }
 }

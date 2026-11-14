@@ -34,7 +34,7 @@ namespace MarrowVale.Common.Prompts
                 prompt.Append($"{(UseOutPutPrefixForExamples ? OutputPrefix : "")}{example.Output}\n\n");
             }
             prompt.Append($"{InputPrefix}{Input}");
-            prompt.Append($"\n{OutputPrefix}");
+            prompt.Append($"\n\n{OutputPrefix}");
 
             return prompt.ToString();
         }

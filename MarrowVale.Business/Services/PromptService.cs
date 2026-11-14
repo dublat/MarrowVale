@@ -105,7 +105,7 @@ namespace MarrowVale.Business.Services
 
         public StandardPrompt GenerateSummaryDescription(string text, SummaryTypeEnum summaryType)
         {
-            var filePath = _summaryFilePath + summaryType.ToString() + jsonExtension;
+            var filePath = _summaryFilePath + (summaryType == SummaryTypeEnum.Building ? "Location" : summaryType.ToString()) + jsonExtension;
             return generateStandardPrompt<DirectObjectPrompt>(text, filePath, PromptTypes.SummaryDescription, summaryType.ToString());
         }
 

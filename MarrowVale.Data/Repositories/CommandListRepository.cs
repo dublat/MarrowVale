@@ -108,28 +108,34 @@ namespace MarrowVale.Data.Repositories
             var border = "-----------------------------------------------------------------------------------";
 
             Console.WriteLine();
-            Console.WindowWidth = _globalItemsProvider.WindowWidth;
-            Console.SetCursorPosition((Console.WindowWidth - border.Length) / 2, Console.CursorTop);
+            if (OperatingSystem.IsWindows() && !Console.IsOutputRedirected) Console.WindowWidth = _globalItemsProvider.WindowWidth;
+            if (!Console.IsOutputRedirected)
+                Console.SetCursorPosition(Math.Max(0, (Console.WindowWidth - border.Length) / 2), Console.CursorTop);
             Console.WriteLine("GAME COMMANDS");            
            
-            Console.SetCursorPosition((Console.WindowWidth - border.Length) / 2, Console.CursorTop);
+            if (!Console.IsOutputRedirected)
+                Console.SetCursorPosition(Math.Max(0, (Console.WindowWidth - border.Length) / 2), Console.CursorTop);
             Console.WriteLine(border);
 
             foreach(var command in commandList)
             {
-                Console.SetCursorPosition((Console.WindowWidth - border.Length) / 2, Console.CursorTop);
+                if (!Console.IsOutputRedirected)
+                    Console.SetCursorPosition(Math.Max(0, (Console.WindowWidth - border.Length) / 2), Console.CursorTop);
                 Console.WriteLine($"{command.Command} : {command.Description}");
             }
 
             Console.WriteLine();
-            Console.SetCursorPosition((Console.WindowWidth - border.Length) / 2, Console.CursorTop);
+            if (!Console.IsOutputRedirected)
+                Console.SetCursorPosition(Math.Max(0, (Console.WindowWidth - border.Length) / 2), Console.CursorTop);
             Console.WriteLine("Multiple commands can be used if they are separated by a ',' (comma)");
 
             Console.WriteLine();
-            Console.SetCursorPosition((Console.WindowWidth - border.Length) / 2, Console.CursorTop);
+            if (!Console.IsOutputRedirected)
+                Console.SetCursorPosition(Math.Max(0, (Console.WindowWidth - border.Length) / 2), Console.CursorTop);
             Console.WriteLine("The game saves automatically");
 
-            Console.SetCursorPosition((Console.WindowWidth - border.Length) / 2, Console.CursorTop);
+            if (!Console.IsOutputRedirected)
+                Console.SetCursorPosition(Math.Max(0, (Console.WindowWidth - border.Length) / 2), Console.CursorTop);
             Console.WriteLine(border + "\n");
         }
     }

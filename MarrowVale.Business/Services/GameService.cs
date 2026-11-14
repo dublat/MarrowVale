@@ -13,75 +13,46 @@ namespace MarrowVale.Business.Services
 {
     public class GameService : IGameService
     {
-        private readonly ILogger<GameService> _logger;
+        private Game _game;
         private readonly IPrintService _printService;
-        private readonly IGlobalItemsProvider _globalItemsProvider;
-        private readonly IDrawingRepository _drawingRepository;
-        private readonly IDrawingService _drawingService;
         private readonly IGameRepository _gameRepository;
-        private readonly IPlayerRepository _playerRepository;
         private readonly IInputProcessingService _inputProcessingService;
-        private readonly IEntityGenerator _entityGenerator;
+        private readonly ICommandProcessingService _commands;
+        private readonly IGameSetupService _setup;
+        private readonly CancellationToken _cancellation;
 
-        private readonly ICombatService _combatService;
-        private readonly ICommandProcessingService _commandProccesingService;
-        
-        private Player Player { get; set; }
-        private Game Game { get; set; }
-        
-        public GameService(ILoggerFactory loggerFactory, IPrintService printService, IGlobalItemsProvider globalItemsProvider,
-            IDrawingRepository drawingRepository, IDrawingService drawingService, IGameSetupService gameSetupService, IGameRepository gameRepository,
-            ICombatService combatService, IInputProcessingService inputProcessingService, IPlayerRepository playerRepository, IEntityGenerator entityGenerator, ICommandProcessingService commandProccesingService)
+        public GameService(IPrintService printService, IGameSetupService setup, IGameRepository gameRepository,
+            IInputProcessingService inputProcessingService, ICommandProcessingService commands, CancellationToken cancellation = default)
         {
-            _logger = loggerFactory.CreateLogger<GameService>();
             _printService = printService;
-            _globalItemsProvider = globalItemsProvider;
-            _drawingRepository = drawingRepository;
-            _drawingService = drawingService;
+            _setup = setup;
             _gameRepository = gameRepository;
-            _combatService = combatService;
-            _playerRepository = playerRepository;
             _inputProcessingService = inputProcessingService;
-            _entityGenerator = entityGenerator;
-            _commandProccesingService = commandProccesingService;
-            Player = gameSetupService.Setup();
-            Game = _gameRepository.LoadGame(Player.GameSaveName);
+            _commands = commands;
+            _cancellation = cancellation;
         }
 
-        public void Start()
+        public async Task Start()
         {
-            Console.Clear();
+            var player = await _setup.Setup();
+            if (player == null) return;
+            _game = _gameRepository.LoadGame(player.GameSaveName);
+            _printService.ClearConsole();
             var lookAround = new Command { Type = CommandEnum.LookAround };
-            _commandProccesingService.ProcessCommand(lookAround, Player);
+            await _commands.ProcessCommand(lookAround, player);
 
             while (true)
             {
+                _cancellation.ThrowIfCancellationRequested();
                 var playerInput = _printService.ReadInput();
-                if (playerInput == "QUIT")
+                if (playerInput == null || playerInput == "QUIT")
                     break;
 
-                var command = _inputProcessingService.ProcessInput(playerInput, "", Player);
-                _commandProccesingService.ProcessCommand(command, Player);
+                var command = await _inputProcessingService.ProcessInput(playerInput, "", player);
+                if (command != null) await _commands.ProcessCommand(command, player);
 
             }
         }
 
-        private CancellationTokenSource startGameClock()
-        {
-            var tokenSource = new CancellationTokenSource();
-            var cancellableTask = Task.Run(() =>
-            {
-                while (true) {
-                    if (tokenSource.IsCancellationRequested)
-                    {
-                        break;
-                    }
-                    Game.GameTime.IncrementTime();
-                    Thread.Sleep(5 * 60 * 1000);
-                }
-            }, tokenSource.Token);
-
-            return tokenSource;
-        }
     }
 }

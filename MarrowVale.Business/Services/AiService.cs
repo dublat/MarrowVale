@@ -3,8 +3,9 @@ using MarrowVale.Common.Contracts;
 using MarrowVale.Common.Evaluator;
 using MarrowVale.Common.Prompts;
 using MarrowVale.Data.Contracts;
-using OpenAI_API;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace MarrowVale.Business.Services
@@ -14,51 +15,61 @@ namespace MarrowVale.Business.Services
         private readonly IOpenAiProvider _openAiProvider;
         private readonly IAiEvaluationService _aiEvaluatorService;
         private readonly IOpenAiSettingRepository _openAiSettingRepository;
-        private readonly string[] stopOn = new string[] { "\n" };
+        private readonly IAppSettingsProvider _config;
 
-        public AiService(IOpenAiProvider openAiProvider, IAiEvaluationService aiEvaluatorService, IOpenAiSettingRepository openAiSettingRepository)
+        public AiService(IOpenAiProvider openAiProvider, IAiEvaluationService aiEvaluatorService, IOpenAiSettingRepository openAiSettingRepository, IAppSettingsProvider config)
         {
+            _config = config;
             _openAiProvider = openAiProvider;
             _aiEvaluatorService = aiEvaluatorService;
             _openAiSettingRepository = openAiSettingRepository;
         }
 
-        public async Task<string> BestMatch(string item, string options)
+        private ChatOptions Options(OpenAiSettings s)
         {
-            throw new NotImplementedException();
+            var model = s.EngineName;
+            if (string.IsNullOrWhiteSpace(model) || model.StartsWith("text-", StringComparison.OrdinalIgnoreCase)
+                || model is "curie" or "babbage" or "davinci" or "ada")
+                model = _config.ChatModel;
+            var stop = s.MultipleStopSequences?.Length > 0 ? s.MultipleStopSequences :
+                string.IsNullOrEmpty(s.StopSequence) ? null : new[] { s.StopSequence };
+            return new(model, s.MaxTokens, s.Temperature, s.TopP, s.PresencePenalty, s.FrequencyPenalty, stop, s.Logprobs);
         }
 
-        //Refactor to use StandardPrompt
-        public async Task<string> Complete(string prompt)
+        private async Task<string> Request(IReadOnlyList<ChatTurn> messages, OpenAiSettings settings,
+            string api, string type, string subtype)
         {
-            return await _openAiProvider.Complete(prompt);
+            var result = await _openAiProvider.Complete(messages, Options(settings));
+            await _aiEvaluatorService.CreateEvaluation(result, api, string.Join("\n", messages.Select(m => m.Content)), type, subtype, settings);
+            return result.Text;
         }
 
-        public async Task<string> Complete(StandardPrompt prompt)
-        {
-            var settings = _openAiSettingRepository.GetSetting(prompt.Type, prompt.SubType);
-            var completionRequest = createCompletionRequest(settings, prompt.ToString());
-            var result = await _openAiProvider.Complete(completionRequest, settings.EngineName);
+        public Task<string> Complete(string prompt) =>
+            Request(new[] { new ChatTurn("user", prompt) }, new OpenAiSettings(35, .65, presencePenalty: .6),
+                "Completion", "Completion", "Raw");
 
-            var apiName = "Completion";
-            await _aiEvaluatorService.CreateEvaluation(result, apiName, prompt, settings);
-            return result.ToString();
+        public async Task<string> Complete(StandardPrompt prompt) =>
+            await Request(new[] { new ChatTurn("user", prompt.ToString()) },
+                await _openAiSettingRepository.GetSetting(prompt.Type, prompt.SubType) ?? new OpenAiSettings(),
+                "Completion", prompt.Type, prompt.SubType);
+
+        public async Task<(IReadOnlyList<ChatTurn> conversation, string response)> SendChat(string message,
+            string systemMessage, IReadOnlyList<ChatTurn> conversation = null, string subtype = "Chat")
+        {
+            var history = conversation?.TakeLast(14).ToList() ?? new List<ChatTurn>();
+            history.Add(new("user", message));
+            var response = await Request(history.Prepend(new ChatTurn("system", systemMessage)).ToList(),
+                await _openAiSettingRepository.GetSetting(MarrowVale.Common.Constants.PromptTypes.DialogueResponse, subtype) ?? new OpenAiSettings(), "Chat", MarrowVale.Common.Constants.PromptTypes.DialogueResponse, subtype);
+            history.Add(new("assistant", response));
+            return (history, response);
         }
 
-        public async Task<string> Search(string query, string[] documents)
+        public async Task<string> Search(IEnumerable<string> documents, string searchTerm)
         {
-            return await _openAiProvider.Search(query, documents);
-
-        }
-
-        private CompletionRequest createCompletionRequest(OpenAiSettings settings, string prompt)
-        {
-            return new CompletionRequest(prompt, 
-                                        temperature: settings.Temperature, 
-                                        max_tokens: settings.MaxTokens, 
-                                        frequencyPenalty: settings.FrequencyPenalty, 
-                                        presencePenalty: settings.PresencePenalty, 
-                                        stopSequences: stopOn);
+            var result = await _openAiProvider.SemanticSearch(documents, searchTerm);
+            if (result == null) return null;
+            await _aiEvaluatorService.CreateEvaluation(result, "Embeddings", searchTerm, "Context", "Search", new OpenAiSettings());
+            return result.Text;
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using MarrowVale.Business.Contracts;
+﻿using System.Threading.Tasks;
+using MarrowVale.Business.Contracts;
 using MarrowVale.Business.Entities.Commands;
 using MarrowVale.Business.Entities.Entities;
 using MarrowVale.Business.Entities.Enums;
@@ -38,7 +39,7 @@ namespace MarrowVale.Business.Services
             _divineInterventionService = divineInterventionService;
         }
 
-        public string Attack(Player player, Npc npc)
+        public async Task<string> Attack(Player player, Npc npc)
         {            
             var enemies = new List<Npc>();
             enemies.Add(npc);
@@ -48,16 +49,16 @@ namespace MarrowVale.Business.Services
 
             while (player.IsAlive() && enemies.Any(x => x.IsAlive))
             {
-                var (playerAction, text) = getPlayerAction(player);
+                var (playerAction, text) = await getPlayerAction(player);
 
-                if (!playersTurn(playerAction, player, enemies, text))
+                if (!await playersTurn(playerAction, player, enemies, text))
                     return "";
 
                 foreach (var enemy in enemies)
                 {
                     if (!enemy.IsAlive || !player.IsAlive())
                         continue;
-                    enemiesTurn(player, enemy);
+                    await enemiesTurn(player, enemy);
                 }
                 enemies = enemies.Where(x => x.IsAlive).ToList();
 
@@ -67,14 +68,14 @@ namespace MarrowVale.Business.Services
         }
 
 
-        private (CombatActionEnum, string) getPlayerAction(Player player)
+        private async Task<(CombatActionEnum, string)> getPlayerAction(Player player)
         {
             var isActionValid = false;
             var text = "";
             var intendedAction = CombatActionEnum.Unknown;
             while (!isActionValid)
             {
-                (intendedAction, text) = determineIntendedAction();
+                (intendedAction, text) = await determineIntendedAction();
                 isActionValid = validateAction(intendedAction, player);
 
                 if (!isActionValid)
@@ -85,19 +86,19 @@ namespace MarrowVale.Business.Services
             return (intendedAction, text);
         }
 
-        private bool playersTurn(CombatActionEnum action, Player player, List<Npc> enemies, string text) =>
+        private async Task<bool> playersTurn(CombatActionEnum action, Player player, List<Npc> enemies, string text) =>
             action switch
             {
-                CombatActionEnum.Melee => meleeAttack(player, enemies, text),
+                CombatActionEnum.Melee => await meleeAttack(player, enemies, text),
                 CombatActionEnum.Spell => spellAttack(player, enemies, text),
                 CombatActionEnum.Flee => flee(player, enemies, text),
-                CombatActionEnum.DivineHelp => divineHelp(player, enemies, text),
+                CombatActionEnum.DivineHelp => await divineHelp(player, enemies, text),
                 CombatActionEnum.Talk => talk(player, enemies, text),
                 CombatActionEnum.PickUpItem => pickupItem(player, enemies, text),
                 _ => flee(player, enemies, text)
             };
 
-        private void enemiesTurn(Player player, Npc enemy)
+        private async Task enemiesTurn(Player player, Npc enemy)
         {
             var weapon = enemy.Weapon;
             var damage = calculateDamage(player?.CurrentArmor, weapon);
@@ -113,30 +114,30 @@ namespace MarrowVale.Business.Services
             var input = $"{weapon.CombatDescription()}\n${enemy.CombatDescription()}";
             var severity = calculateSeverity(player.CurrentHealth, player.MaxHealth, weapon.Damage);
             var prompt = _promptService.GenerateDefenseDescription(input, CombatActionEnum.Melee, severity);
-            var resultDescription = _aiService.Complete(prompt).Result;
+            var resultDescription = (await _aiService.Complete(prompt));
 
             _printService.Type(resultDescription);
-            _playerRepository.Update(player);
+            await _playerRepository.Update(player);
         }
 
-        private (CombatActionEnum, string) determineIntendedAction()
+        private async Task<(CombatActionEnum, string)> determineIntendedAction()
         {
             while (true)
             {
                 Console.WriteLine();
                 var action = _printService.ReadInput();
                 var prompt = _promptService.GenerateCombatIntentPrompt(action);
-                var responseType = _aiService.Complete(prompt).Result?.Trim();
+                var responseType = (await _aiService.Complete(prompt))?.Trim();
 
-                var isValidEnum = CombatActionEnum.TryParse(responseType, out CombatActionEnum combatStatus);
+                var isValidEnum = CombatActionEnum.TryParse(responseType, true, out CombatActionEnum combatStatus);
 
-                if (isValidEnum)
+                if (isValidEnum && Enum.IsDefined(combatStatus) && string.Equals(combatStatus.ToString(), responseType, StringComparison.OrdinalIgnoreCase))
                     return (combatStatus, action);
                 _printService.Print("The intended action was not understood");
             }
         }
 
-        private bool meleeAttack(Player player, List<Npc> enemies, string text)
+        private async Task<bool> meleeAttack(Player player, List<Npc> enemies, string text)
         {
             var weapon = player.CurrentWeapon;
             var target = enemies.Count == 1 ? enemies.First() : intendedTarget(enemies, text);
@@ -154,10 +155,10 @@ namespace MarrowVale.Business.Services
             var input = $"{weapon.CombatDescription()}\n{target.CombatDescription()}\nAttempted Action: {text}";
             var severity = calculateSeverity(target.CurrentHealth, target.MaxHealth, weapon.Damage);
             var prompt = _promptService.GenerateAttackDescription(input, CombatActionEnum.Melee, severity);
-            var resultDescription = _aiService.Complete(prompt).Result;
+            var resultDescription = (await _aiService.Complete(prompt));
 
             _printService.Type(resultDescription);
-            _npcRepository.Update(target);
+            await _npcRepository.Update(target);
             return true;
         }
 
@@ -177,10 +178,10 @@ namespace MarrowVale.Business.Services
 
         }
 
-        private bool divineHelp(Player player, List<Npc> enemies, string text)
+        private async Task<bool> divineHelp(Player player, List<Npc> enemies, string text)
         {
             var target = intendedTarget(enemies, text);
-            _divineInterventionService.Smite(target);
+            await _divineInterventionService.Smite(target);
             return true;
         }
 
@@ -205,7 +206,7 @@ namespace MarrowVale.Business.Services
 
         private bool validateAction(CombatActionEnum action, Player player)
         {
-            return true;
+            return action is CombatActionEnum.Melee or CombatActionEnum.Flee or CombatActionEnum.DivineHelp;
         }
 
         private CombatSeverityEnum calculateSeverity(int currentHealth, int maxHealth, int damage)

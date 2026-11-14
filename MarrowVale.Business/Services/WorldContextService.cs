@@ -48,58 +48,33 @@ namespace MarrowVale.Business.Services
         }
 
 
-        public T DirectObjectCommand<T>(string input, string context, GraphNode owner, CommandEnum command) where T : GraphNode
+        public async Task<T> DirectObjectCommand<T>(string input, string context, GraphNode owner, CommandEnum command) where T : GraphNode
         {
 
             var prompt = _promptService.GenerateDirectObjectPrompt(input, command);
-            var directObject = _aiService.Complete(prompt.ToString()).Result;
-            return GetObjectLabelIdPair<T>(directObject, owner, input);
+            var directObject = await _aiService.Complete(prompt.ToString());
+            return await GetObjectLabelIdPair<T>(directObject, owner, input);
         }
 
-        public GraphNode GetObjectLabelIdPair(string searchTerm, Player player, string input)
+        public async Task<GraphNode> GetObjectLabelIdPair(string searchTerm, Player player, string input)
         {
-            GraphNode node;
-            try {
-                node = _graphClient.Cypher
-                    .Match("(n)")
-                    .Where((GraphNode n) => n.Name == searchTerm)
-                    .With("{Id: n.Id, Name: n.Name, Description: n.Description, Labels: labels(n)} as generalNode")
-                    .Return(generalNode => generalNode.As<GraphNode>())
-                    .ResultsAsync.Result.FirstOrDefault();
-
-                if (node == null)
-                    throw new Exception("No node found when searching direct object by name");
-
-                //var pair = _graphClient.Cypher
-                //            .Match("(n)")
-                //            .Where((GraphNode n) => n.Name == searchTerm)
-                //            .Return((x,n) => new
-                //            {
-                //                Id = n.As<GraphNode>(),
-                //                Labels = x.Labels()
-                //            }).ResultsAsync.Result.FirstOrDefault();
-
-            }
-            catch
-            {
-                return ContextSearch(searchTerm, input);
-            }
-
-
-
-
-            return node;
+            var matches = await _graphClient.Cypher
+                .Match("(n)")
+                .Where((GraphNode n) => n.Name == searchTerm)
+                .With("{Id: n.Id, Name: n.Name, Description: n.Description, Labels: labels(n)} as generalNode")
+                .Return(generalNode => generalNode.As<GraphNode>()).ResultsAsync;
+            return matches.FirstOrDefault() ?? await ContextSearch(searchTerm, input);
         }
 
-        public T GetObjectLabelIdPair<T>(string searchTerm, GraphNode owner, string input) where T : GraphNode
+        public async Task<T> GetObjectLabelIdPair<T>(string searchTerm, GraphNode owner, string input) where T : GraphNode
         {
             try
             {
-                return _graphClient.Cypher
+                return (await _graphClient.Cypher
                     .Match("(n)")
                     .Where((T n) => n.Name == searchTerm)
                     .Return(n => n.As<T>())
-                    .ResultsAsync.Result.FirstOrDefault();
+                    .ResultsAsync).FirstOrDefault();
             }
             catch
             {
@@ -108,10 +83,10 @@ namespace MarrowVale.Business.Services
             }
         }
 
-        public string DescribeConnectedPaths(Player player)
+        public async Task<string> DescribeConnectedPaths(Player player)
         {
-            var currentLocationType = _playerRepository.PlayerLocationType(player);
-            var currentLocation = _playerRepository.GetPlayerLocation(player);
+            var currentLocationType = await _playerRepository.PlayerLocationType(player);
+            var currentLocation = await _playerRepository.GetPlayerLocation(player);
 
             var prompt = new StringBuilder();
             prompt.Append("Generate a summary based on the following\n");
@@ -122,17 +97,17 @@ namespace MarrowVale.Business.Services
             prompt.Append("Summary: Leaving, you are now near Windsor Road, Rusty Nail, an old and run down bar, the Giant's Hotel is nearby.  You can also see Tom's Cafe\n\n");
 
 
-            var nearbyBuildings = _graphClient.Cypher
+            var nearbyBuildings = await _graphClient.Cypher
                             .Match("(x:Building)-[:PATH]->(z:Building)")
                             .Where((Building x) => x.Id == currentLocation.Id)
                             .Return(z => z.As<Building>())
-                            .ResultsAsync.Result;
+                            .ResultsAsync;
 
-            var nearbyRoads = _graphClient.Cypher
+            var nearbyRoads = await _graphClient.Cypher
                 .Match("(x:Building)-[:PATH]->(z:Road)")
                 .Where((Building x) => x.Id == currentLocation.Id)
                 .Return(z => z.As<Road>())
-                .ResultsAsync.Result;
+                .ResultsAsync;
 
             foreach (var building in nearbyBuildings)
             {
@@ -143,41 +118,39 @@ namespace MarrowVale.Business.Services
                 prompt.Append($"Name:{localRoad.Name} | Description:{localRoad.Description}\n");
             }
             prompt.Append("Summary:");
-            return _aiService.Complete(prompt.ToString()).Result;
+            return await _aiService.Complete(prompt.ToString());
         }
 
 
-        public GraphNode ContextSearch(string searchTerm, string conversation)
+        public Task<GraphNode> ContextSearch(string searchTerm, string conversation)
         {
-            var contextDictionary = ContextNodes.ToDictionary(x => $"{x.Name}: {x.Description}",x => x);
-            var documents = contextDictionary.Keys.ToArray();
-            var query = $"{searchTerm}";
-            var resultKey = _aiService.Search(query, documents).Result;
-            return contextDictionary[resultKey];
+            var context = new Dictionary<string, GraphNode>();
+            foreach (var node in ContextNodes.Where(n => n != null))
+                context.TryAdd($"{node.Name}: {node.Description}", node);
+            return Search(context, searchTerm);
         }
 
-
-
-        public GraphNode ContextSearch(string searchTerm, GraphNode knowledge)
+        public Task<GraphNode> ContextSearch(string searchTerm, GraphNode knowledge)
         {
-            var contextDictionary = new Dictionary<string, GraphNode>();
-            GetContextFromNode(knowledge, contextDictionary, "ARE", "YOU");
-            var documents = contextDictionary.Keys.ToArray();
-            var query = $"{searchTerm}";
-            var resultKey = _aiService.Search(query, documents).Result;
-            return contextDictionary[resultKey];
-        }
-
-
-        public void GetContextFromNode(GraphNode node, Dictionary<string, GraphNode> context, string relation, string subject)
-        {
-            foreach (var r in node.Relations ?? Enumerable.Empty<BaseRelationship>())
+            var context = new Dictionary<string, GraphNode>();
+            var visited = new HashSet<GraphNode>(ReferenceEqualityComparer.Instance);
+            void Visit(GraphNode node, string relation, string subject)
             {
-                GetContextFromNode(r.Node, context, r.Relation, node.Name);
+                if (node == null) return;
+                context.TryAdd($"{subject} {relation} {node.Name}", node);
+                if (!visited.Add(node)) return;
+                foreach (var edge in node.Relations ?? Enumerable.Empty<BaseRelationship>())
+                    if (edge != null) Visit(edge.Node, edge.Relation, node.Name);
             }
-            var description = $"{subject} {relation} {node.Name}";
-            context[description] = node;
-        
+            Visit(knowledge, "ARE", "YOU");
+            return Search(context, searchTerm);
+        }
+
+        private async Task<GraphNode> Search(Dictionary<string, GraphNode> context, string term)
+        {
+            if (context.Count == 0 || string.IsNullOrWhiteSpace(term)) return null;
+            var key = await _aiService.Search(context.Keys, term);
+            return key != null && context.TryGetValue(key, out var node) ? node : null;
         }
     }
 }

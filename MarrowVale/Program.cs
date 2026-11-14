@@ -15,7 +15,7 @@ namespace MarrowVale
 {
     class Program
     {
-        static void Main(string[] args)
+        static async System.Threading.Tasks.Task Main(string[] args)
         {
             Console.Title = "Marrow Vale - The Realm of Dragons";
             Console.ForegroundColor = ConsoleColor.Green;
@@ -23,36 +23,26 @@ namespace MarrowVale
             //Configure DI
             var serviceCollection = new ServiceCollection();
 
+            using var shutdown = new System.Threading.CancellationTokenSource();
+            Console.CancelKeyPress += (_, e) => { e.Cancel = true; shutdown.Cancel(); };
+            serviceCollection.AddSingleton(typeof(System.Threading.CancellationToken), shutdown.Token);
             ConfigureServices(serviceCollection);
             ConfigureRepositories(serviceCollection);
             ConfigureProviders(serviceCollection);
 
-            var serviceProvider = serviceCollection.BuildServiceProvider();
-
-            //var inputProcessor = serviceProvider.GetService<IInputProcessingService>();
-
-            //inputProcessor.ProcessInput("Hello");
-
-            //var soundRepo = serviceProvider.GetService<ISoundRepository>();
-                     
-            //var audio = soundRepo.GetMusicLooping("Title.wav");
-
-            var gameService = serviceProvider.GetService<IGameService>();
-            gameService.Start();
-            
-            //var artRepo = serviceProvider.GetService<IDrawingRepository>();
-            //var title = artRepo.GetTitleArt();
-            //artRepo.PrintArtCentered(title);
-
-            //var commandRepo = serviceProvider.GetService<ICommandListRepository>();
-            //commandRepo.PrintCommands();
-
-            //var classRepo = serviceProvider.GetService<IClassRepository>();
-            //classRepo.GetClasses();
-
-            //soundRepo.DisposeMusic(audio);
-
-            Console.ReadKey();
+            using var serviceProvider = serviceCollection.BuildServiceProvider();
+            try
+            {
+                var graph = serviceProvider.GetRequiredService<IGraphClient>();
+                await graph.ConnectAsync().WaitAsync(shutdown.Token);
+                await serviceProvider.GetRequiredService<IGameService>().Start();
+            }
+            catch (OperationCanceledException) when (shutdown.IsCancellationRequested) { }
+            catch (Exception error)
+            {
+                Console.Error.WriteLine($"Game stopped ({error.GetType().Name}). Check the configured services and connection settings.");
+                Environment.ExitCode = 1;
+            }
         }
 
         #region Service Life Times
@@ -82,16 +72,11 @@ namespace MarrowVale
 
         private static void ConfigureServices(IServiceCollection services)
         {
-            LogLevel logLevel;
-
-            #if DEBUG
-                logLevel = LogLevel.Information;
-            #elif DEVELOPMENT
-                logLevel = LogLevel.Information;
-#elif RELEASE
-                logLevel = LogLevel.Error;
+#if DEBUG || DEVELOPMENT
+            const LogLevel logLevel = LogLevel.Information;
+#else
+            const LogLevel logLevel = LogLevel.Error;
 #endif
-
 
             //add services to service collection
             services.AddLogging(configure => configure.AddConsole().SetMinimumLevel(logLevel))
@@ -121,8 +106,7 @@ namespace MarrowVale
         {
             //add repos to service collection
             //use dbcontextscope?
-            services.AddTransient<ICommandListRepository, CommandListRepository>()
-                .AddTransient<IDrawingRepository, DrawingRepository>()
+            services.AddTransient<IDrawingRepository, DrawingRepository>()
                 .AddTransient<ISoundRepository, SoundRepository>()
                 .AddTransient<IClassRepository, ClassRepository>()
                 .AddSingleton<IGameRepository, GameRepository>()
@@ -142,14 +126,17 @@ namespace MarrowVale
         private static void ConfigureProviders(IServiceCollection services)
         {
             //add providers to service collection
-            services.AddTransient<IAppSettingsProvider, AppSettingsProvider>()
+            services.AddSingleton<IAppSettingsProvider, AppSettingsProvider>()
                 .AddSingleton<IGlobalItemsProvider, GlobalItemsProvider>()
+                .AddSingleton(_ => new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(45) })
                 .AddSingleton<IOpenAiProvider, OpenAiProvider>()
                 .AddSingleton<IGraphClient>(context =>
                 {
-                    var graphClient = new GraphClient(new Uri("http://localhost:7474"), "test", "test");
-                    graphClient.ConnectAsync().Wait();
-                    return graphClient;
+                    var settings = context.GetRequiredService<IAppSettingsProvider>();
+                    if (!Uri.TryCreate(settings.Neo4jUrl, UriKind.Absolute, out var url) ||
+                        string.IsNullOrWhiteSpace(settings.Neo4jUser) || string.IsNullOrWhiteSpace(settings.Neo4jPassword))
+                        throw new InvalidOperationException("Configure SystemSettings for Neo4j.");
+                    return new GraphClient(url, settings.Neo4jUser, settings.Neo4jPassword);
                 });
 
 

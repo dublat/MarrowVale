@@ -333,7 +333,7 @@ namespace MarrowVale.Data.Repositories
         public ICypherFluentQuery devToolDatabase()
         {
             return _graphClient.Cypher
-                .WithDatabase("devToolBox");
+                .WithDatabase("devtoolbox");
         }
 
 

@@ -1,12 +1,10 @@
 ﻿using MarrowVale.Business.Entities.Entities;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Threading.Tasks;
 
 namespace MarrowVale.Business.Contracts
 {
     public interface IDialogueService
     {
-        void Talk(Player player, Npc npc);
+        Task Converse(Player player, Npc npc);
     }
 }

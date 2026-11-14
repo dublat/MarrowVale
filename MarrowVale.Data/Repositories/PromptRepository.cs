@@ -1,8 +1,7 @@
-﻿using MarrowVale.Business.Entities.Entities;
+﻿using MarrowVale.Common.Evaluator;
+using MarrowVale.Business.Entities.Entities;
 using MarrowVale.Data.Contracts;
 using Neo4jClient;
-using Neo4jClient.Cypher;
-using OpenAI_API;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -13,7 +12,7 @@ namespace MarrowVale.Data.Repositories
     {
         public PromptRepository(IGraphClient graphClient) : base(graphClient){}
 
-        public async Task CreateDefaultPromptSetting(string promptType, string subPromptType, CompletionRequest request)
+        public async Task CreateDefaultPromptSetting(string promptType, string subPromptType, OpenAiSettings request)
         {
             await devToolDatabase()
                 .Match("(promptType:PromptType { Name: $promptType })-[:SUBCLASS]->(subPromptType:SubPromptType { Name: $subPromptType })")
@@ -29,17 +28,17 @@ namespace MarrowVale.Data.Repositories
                 .ExecuteWithoutResultsAsync();
         }
 
-        public async Task<CompletionRequest> GetDefaultPromptSetting(string promptType, string subPromptType, CompletionRequest request)
+        public async Task<OpenAiSettings> GetDefaultPromptSetting(string promptType, string subPromptType, OpenAiSettings request)
         {
-            return devToolDatabase()
+            return (await devToolDatabase()
                 .Match("(promptType:PromptType { Name: $promptType })-[:SUBCLASS]->(subPromptType:SubPromptType { Name: $subPromptType })-[:DEFAULT]->(setting:Setting)")
                 .WithParams(new
                 {
                     promptType = promptType,
                     subPromptType = subPromptType,
                 })
-                .Return(setting => setting.As<CompletionRequest>())
-                .ResultsAsync.Result.FirstOrDefault();
+                .Return(setting => setting.As<OpenAiSettings>())
+                .ResultsAsync).FirstOrDefault();
         }
 
         public Task UpdateDefaultPromptSetting(Player player)

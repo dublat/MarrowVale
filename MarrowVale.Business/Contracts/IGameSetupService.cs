@@ -4,6 +4,6 @@ namespace MarrowVale.Business.Contracts
 {
     public interface IGameSetupService
     {
-        Player Setup();
+        System.Threading.Tasks.Task<Player> Setup();
     }
 }

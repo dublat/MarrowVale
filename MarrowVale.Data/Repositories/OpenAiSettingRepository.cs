@@ -53,9 +53,9 @@ namespace MarrowVale.Data.Repositories
 
         }
 
-        public OpenAiSettings GetSetting(string promptType, string promptSubType)
+        public async Task<OpenAiSettings> GetSetting(string promptType, string promptSubType)
         {
-            var defaultSetting = devToolDatabase()
+            var defaultSetting = (await devToolDatabase()
                 .Match("(promptType:PromptType { Name: $promptType })-[:SUBCLASS]->(subPromptType:SubPromptType { Name: $subPromptType })-[:DEFAULT]->(setting:Setting)")
                 .WithParams(new
                 {
@@ -63,20 +63,20 @@ namespace MarrowVale.Data.Repositories
                     subPromptType = promptSubType,
                 })
                 .Return(setting => setting.As<OpenAiSettings>())
-                .ResultsAsync.Result.FirstOrDefault();
+                .ResultsAsync).FirstOrDefault();
 
             if (defaultSetting == null)
             {
-                defaultSetting = devToolDatabase()
+                defaultSetting = (await devToolDatabase()
                     .Match("(promptType:PromptType { Name: $promptType })-[:DEFAULT]->(setting:Setting)")
                     .WithParams(new
                     {
                         promptType = promptType,
                     })
                     .Return(setting => setting.As<OpenAiSettings>())
-                    .ResultsAsync.Result.FirstOrDefault();
+                    .ResultsAsync).FirstOrDefault();
             }
-            defaultSetting.MultipleStopSequences = stopOn;
+
 
             return defaultSetting;
         }
@@ -84,7 +84,7 @@ namespace MarrowVale.Data.Repositories
         public async Task CreatePrompts(PromptType promptType, string subType = null)
         {
 
-            await devToolDatabase()
+            var query = devToolDatabase()
             .Merge("(promptType:PromptType { Name: $name })")
             .OnCreate()
             .Set("promptType = $promptType")
@@ -92,8 +92,9 @@ namespace MarrowVale.Data.Repositories
             {
                 name = promptType.Name,
                 promptType
-            })
-            .ExecuteWithoutResultsAsync();
+            });
+
+            await query.ExecuteWithoutResultsAsync();
         }
 
 

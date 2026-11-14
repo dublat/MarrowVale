@@ -48,7 +48,7 @@ namespace MarrowVale.Business.Entities.Entities
             return Items.FirstOrDefault(x => x.Name.Equals(item, StringComparison.CurrentCultureIgnoreCase));
         }
 
-        public virtual StringBuilder DescriptionPromptInput()
+        public new virtual StringBuilder DescriptionPromptInput()
         {
             var description = new StringBuilder();
             description.Append($"Name: {this.Name}");
