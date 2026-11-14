@@ -40,48 +40,48 @@ namespace MarrowVale.Data.Repositories
                     .ExecuteWithoutResultsAsync();
             }
                 
-            var startingRoad = _graphClient.Cypher
+            var startingRoad = (await _graphClient.Cypher
                 .Match("(x:Road)")
                 .Return(x => x.As<Road>())
-                .ResultsAsync.Result.FirstOrDefault();
+                .ResultsAsync).FirstOrDefault();
 
             var at = new AtRelation { IsDirectedOut = true };
             await Relate<Road, GraphRelationship>(x => x.Id == player.Id, y => y.Id == startingRoad.Id, at);
         }
 
-        public IList<string> PlayerLocationType(Player player)
+        public async Task<IList<string>> PlayerLocationType(Player player)
         {
             var at = RelationshipConstants.At;
-            var locations = _graphClient.Cypher
+            var locations = (await _graphClient.Cypher
                 .Match($"(x:Player)-[:{at}]->(z)")
                 .Where((Player x) => x.Id == player.Id)
                 .Return(z => z.Labels())
-                .ResultsAsync.Result.FirstOrDefault();
+                .ResultsAsync).FirstOrDefault();
 
             return locations.ToList();
         }
 
-        public Location GetPlayerLocation(Player player)
+        public async Task<Location> GetPlayerLocation(Player player)
         {
             var at = new AtRelation { IsDirectedOut = true };
-            return RelatedTo<Location, GraphRelationship>(x => x.Id == player.Id, y => true, at).ResultsAsync.Result.FirstOrDefault();
+            return (await RelatedTo<Location, GraphRelationship>(x => x.Id == player.Id, y => true, at).ResultsAsync).FirstOrDefault();
         }
 
-        public Player GetPlayerWithInventory(string playerId)
+        public async Task<Player> GetPlayerWithInventory(string playerId)
         {
-            var player = GetById(playerId).Result;
-            player.Inventory = GetInventory(player);
+            var player = (await GetById(playerId));
+            player.Inventory = await GetInventory(player);
 
             var equipped = new GraphRelationship(RelationshipConstants.Equipped, isDirectedOut: true);
-            player.CurrentWeapon = RelatedTo<Weapon, GraphRelationship>(x => x.Id == playerId, y => true, equipped).ResultsAsync.Result.FirstOrDefault();
+            player.CurrentWeapon = (await RelatedTo<Weapon, GraphRelationship>(x => x.Id == playerId, y => true, equipped).ResultsAsync).FirstOrDefault();
             return player;
 
         }
 
-        public void MovePlayer(Player player,string currentLocationId, string newLocationId)
+        public async Task MovePlayer(Player player,string currentLocationId, string newLocationId)
         {
             var at = RelationshipConstants.At;
-            _graphClient.Cypher
+            await _graphClient.Cypher
                 .Match($"(p)-[r1:{at}]->(oldLocation),(newLocation)")
                 .Where((Player p) => p.Id == player.Id)
                 .AndWhere((Location oldLocation) => oldLocation.Id == currentLocationId)
@@ -89,11 +89,11 @@ namespace MarrowVale.Data.Repositories
                 .Create($"(p)-[r2:{at}]->(newLocation)")
                 .Set("r2=r1")
                 .Delete("r1")
-                .ExecuteWithoutResultsAsync().Wait();
+                .ExecuteWithoutResultsAsync();
         }
 
 
-        public Inventory GetInventory(Player player)
+        public async Task<Inventory> GetInventory(Player player)
         {
             var own = RelationshipConstants.Own;
             var query = _graphClient.Cypher
@@ -103,7 +103,7 @@ namespace MarrowVale.Data.Repositories
                         .With("{Id:inventory.Id, CurrentCurrency:inventory.CurrentCurrency, MaxCurrency:inventory.MaxCurrency, Items:collect(allItems)} as playerInventory")
                         .Return(playerInventory => playerInventory.As<Inventory>());
 
-            return query.ResultsAsync.Result.FirstOrDefault();
+            return (await query.ResultsAsync).FirstOrDefault();
         }
 
 

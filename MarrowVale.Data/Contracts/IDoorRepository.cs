@@ -8,7 +8,7 @@ namespace MarrowVale.Data.Contracts
     {
         bool IsDoorOpenable(Player player, Door door);
         bool IsDoorCloseable(Player player, Door door);
-        bool HasKey(Player player, Door door);
+        Task<bool> HasKey(Player player, Door door);
         Task OpenDoor(Door door);
         Task CloseDoor(Door door);
         void BreakDoor(Door door);

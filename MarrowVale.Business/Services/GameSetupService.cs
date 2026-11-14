@@ -13,68 +13,50 @@ namespace MarrowVale.Business.Services
         private readonly IPrintService _printService;
         private readonly IDrawingRepository _drawingRepository;
         private readonly IDrawingService _drawingService;
-        private readonly IGameRepository _gameRepository;
         private readonly IEntityGenerator _entityGenerator;
-        private readonly IDialogueService _dialogueService;
-        private readonly IInputProcessingService _inputProcessingService;
-        private readonly IWorldContextService _worldContextService;
 
         public GameSetupService(ICharacterService characterService, IDrawingRepository drawingRepository, IPrintService printService,
-            IDrawingService drawingService, IGameRepository gameRepository, IEntityGenerator entityGenerator, IDialogueService dialogueService, IInputProcessingService inputProcessingService, IWorldContextService worldContextService)
+            IDrawingService drawingService, IEntityGenerator entityGenerator)
         {
             _characterService = characterService;
             _printService = printService;
             _drawingRepository = drawingRepository;
             _drawingService = drawingService;
-            _gameRepository = gameRepository;
             _entityGenerator = entityGenerator;
-            _dialogueService = dialogueService;
-            _inputProcessingService = inputProcessingService;
-            _worldContextService = worldContextService;
         }
 
-        public Player Setup()
+        public async System.Threading.Tasks.Task<Player> Setup()
         {
-            var title = _drawingRepository.GetTitleArt();
-            _drawingService.PrintArtCentered(title);
-
-            _printService.TypeCentered("New Game", 8);
-            _printService.TypeCentered("Continue");
-
-            var gameType = _printService.ReadInput();
-
-            _entityGenerator.DefaultSettings().Wait();
-
-            if (gameType.ToUpper() == "NEW GAME")
+            while (true)
             {
-                _entityGenerator.GenerateBuildings();
-                _entityGenerator.GenerateCharacters();
-                return newGame();
-            }
-            else if(gameType.ToUpper() == "CONTINUE")
-            {
-                return continueGame();
-            }
-            else
-            {
-                _printService.Print("You must choose to start a New Game or Continue a saved game. Type your choice.");
-                Thread.Sleep(4000);
-                return Setup();
-            }
-        }
+                var title = _drawingRepository.GetTitleArt();
+                _drawingService.PrintArtCentered(title);
 
-        private Player newGame()
-        {
-            var player = _characterService.NewCharacter();
-            return player;
-        }
+                _printService.TypeCentered("New Game", 8);
+                _printService.TypeCentered("Continue");
 
-        private Player continueGame()
-        {
-            //display list of characters
-            //load character chosen
-            var player = _characterService.LoadCharacter();
-            return player;
+                var gameType = _printService.ReadInput();
+
+                if (gameType == null) return null;
+                await _entityGenerator.DefaultSettings();
+
+                if (gameType.ToUpper() == "NEW GAME")
+                {
+                    await _entityGenerator.GenerateBuildings();
+                    await _entityGenerator.GenerateCharacters();
+                    return await _characterService.NewCharacter();
+                }
+                else if(gameType.ToUpper() == "CONTINUE")
+                {
+                    return await _characterService.LoadCharacter();
+                }
+                else
+                {
+                    _printService.Print("You must choose to start a New Game or Continue a saved game. Type your choice.");
+                    Thread.Sleep(4000);
+
+                }
+            }
         }
 
     }

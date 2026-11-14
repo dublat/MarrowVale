@@ -18,12 +18,12 @@ namespace MarrowVale.Data.Repositories
 
         }
 
-        public Npc GetNpcByName(string firstName)
+        public async Task<Npc> GetNpcByName(string firstName)
         {
-            return Single(x => x.Name == firstName).Result;
+            return (await Single(x => x.Name == firstName));
         }
 
-        public bool IsPlayerNearby(Player player, Npc npc)
+        public async Task<bool> IsPlayerNearby(Player player, Npc npc)
         {
             if (npc == null || player == null)
                 return false;
@@ -32,75 +32,64 @@ namespace MarrowVale.Data.Repositories
             inside.IsDirectedOut = true;
             var at = new AtRelation { IsDirectedOut = false };
 
-            return RelatedToAndFrom<Room, Player, GraphRelationship>(x => x.Id == npc.Id, z => true, y => y.Id == player.Id, inside, at).ResultsAsync.Result.Any();
+            return (await RelatedToAndFrom<Room, Player, GraphRelationship>(x => x.Id == npc.Id, z => true, y => y.Id == player.Id, inside, at).ResultsAsync).Any();
 
         }
 
-        public ConversationNode MemoryofPlayer(Npc npc)
+        public async Task<ConversationNode> MemoryofPlayer(Npc npc, Player player)
         {
-            return _graphClient.Cypher
-                        .Match("(x:Character)-[:REMEMBERS]-(z:Conversation)-[:MENTIONS]-(y:Player)")
+            return (await _graphClient.Cypher
+                .Match("(x:Character)-[:REMEMBERS|MEMORY]-(z:Conversation)-[:MENTIONS|MENTIONED]-(y:Player)")
+                .Where((Npc x) => x.Id == npc.Id)
+                .AndWhere((Player y) => y.Id == player.Id)
+                .Return(z => z.As<ConversationNode>())
+                .OrderByDescending("coalesce(z.CreatedAt, 0)")
+                .Limit(1).ResultsAsync).FirstOrDefault();
+        }
+
+        public async Task<IEnumerable<BaseRelationship>> AllMemories(Npc npc)
+        {
+            return (await _graphClient.Cypher
+                        .Match("(x:Character)-[r:REMEMBERS|MEMORY]-(z)")
                         .Where((Npc x) => x.Id == npc.Id)
-                        .Return(z => z.As<ConversationNode>())
-                        .ResultsAsync.Result.FirstOrDefault();
+                        .With("{Relation: type(r), Node: z} as objectNode")
+                        .Return(objectNode => objectNode.CollectAs<BaseRelationship>()).ResultsAsync).FirstOrDefault();
         }
 
-        public IEnumerable<BaseRelationship> AllMemories(Npc npc)
+        public async Task<GraphNode> AllKnowledge(Npc npc)
         {
-            return _graphClient.Cypher
-                        .Match("(x:Character)-[r:REMEMBERS]-(z)")
-                        .With("{Relationship: type(r), Node: z} as objectNode")
-                        .Where((Npc x) => x.Id == npc.Id)
-                        .Return(objectNode => objectNode.CollectAs<BaseRelationship>()).ResultsAsync.Result.FirstOrDefault();
-        }
-
-        public GraphNode AllKnowledge(Npc npc)
-        {
-            var knowledge = _graphClient.Cypher
+            var knowledge = (await _graphClient.Cypher
                         .Match("(x:Character)-[r]->(item)")
                         .Where((Npc x) => x.Id == npc.Id)
+                        .AndWhere("NOT item:Conversation")
                         .With("{Id: x.Id, Name: x.Name, Relations: collect({Relation: type(r), Node: item})} as characterNode")
-                        .Return(characterNode => characterNode.As<GraphNode>()).ResultsAsync.Result.FirstOrDefault();
+                        .Return(characterNode => characterNode.As<GraphNode>()).ResultsAsync).FirstOrDefault();
 
-            //var initialKnowledge = _graphClient.Cypher
-            //            .Match("(x:Character)-[r]->(item)")
-            //            .OptionalMatch("(item)-[:PARTOF]->(subItem)")
-            //            .With("x,{Relation: type(r), Node: item, Labels: labels(item)} as relations")
-            //            .Where((Npc x) => x.Id == npc.Id)
-            //            .Return((x, relations) => new GraphNodeData
-            //            {
-            //                Data = x.As<GraphNode>(),
-            //                Relations = relations.CollectAs<BaseRelationship>(),
-
-            //            }).ResultsAsync.Result.FirstOrDefault();
-
-            foreach (var k in knowledge.Relations)
+            foreach (var k in knowledge?.Relations ?? Enumerable.Empty<BaseRelationship>())
             {
-                var metaKnowledge = _graphClient.Cypher
+                var metaKnowledge = await _graphClient.Cypher
                         .Match("(item)-[r:PARTOF]->(subItem)")
                         .Where((GraphNode item) => item.Id == k.Node.Id)
                         .With("{Relation: type(r), Node: subItem} as test")
-                        .Return(test => test.As<BaseRelationship>()).ResultsAsync.Result;
-                k.Node.Relations = k.Node.Relations.Concat(metaKnowledge);
+                        .Return(test => test.As<BaseRelationship>()).ResultsAsync;
+                k.Node.Relations = (k.Node.Relations ?? Enumerable.Empty<BaseRelationship>()).Concat(metaKnowledge);
             }
 
 
             return knowledge;
         }
 
-        public IEnumerable<Item> MerchantInventory(Npc npc)
+        public async Task<IEnumerable<Item>> MerchantInventory(Npc npc)
         {
-            var test = AllKnowledge(npc);
-
-            return _graphClient.Cypher
+            return (await _graphClient.Cypher
                         .Match("(x:Character)-[r:SELLS]->(z)-[]->(item:Item)")
                         .Where((Npc x) => x.Id == npc.Id)
-                        .Return(item => item.As<Item>()).ResultsAsync.Result;
+                        .Return(item => item.As<Item>()).ResultsAsync);
         }
 
-        public Item BuyItem(Npc npc, Player player, Item item, int price, int quantity = 1)
+        public async Task<Item> BuyItem(Npc npc, Player player, Item item, int price, int quantity = 1)
         {
-            return _graphClient.Cypher
+            return (await _graphClient.Cypher
                 .Match("(seller:Character)-[r1:SELLS]->(sellerInventory:Inventory)-[r2:PARTOF]->(tradedItem:Item),(p:Player)-[r3:OWNS]->(playerInventory:Inventory)")
                 .Where((Player p) => p.Id == player.Id)
                 .AndWhere((Npc seller) => seller.Id == npc.Id)
@@ -109,16 +98,16 @@ namespace MarrowVale.Data.Repositories
                 .Set($"sellerInventory.CurrentCurrency = sellerInventory.CurrentCurrency + {price}")
                 .Create("(playerInventory)-[:PARTOF]->(tradedItem)")
                 .Delete("r2")
-                .Return(tradedItem => tradedItem.As<Item>()).ResultsAsync.Result.FirstOrDefault();
+                .Return(tradedItem => tradedItem.As<Item>()).ResultsAsync).FirstOrDefault();
         }
 
-        public Item SellItem(Npc npc, Player player, Item item, int price, int quantity = 1)
+        public async Task<Item> SellItem(Npc npc, Player player, Item item, int price, int quantity = 1)
         {
             var own = RelationshipConstants.Own;
             var partOf = RelationshipConstants.PartOf;
             var sells = RelationshipConstants.Sells;
 
-            return _graphClient.Cypher
+            return (await _graphClient.Cypher
                 .Match($"(p:Player)-[r1:{own}]->(playerInventory:Inventory)-[r2:{partOf}]->(tradedItem:Item),(merchant:Character)-[r3:{sells}]->(merchantInventory:Inventory)")
                 .Where((Player p) => p.Id == player.Id)
                 .AndWhere((Npc merchant) => merchant.Id == npc.Id)
@@ -127,42 +116,36 @@ namespace MarrowVale.Data.Repositories
                 .Set($"merchantInventory.CurrentCurrency = merchantInventory.CurrentCurrency - {price}")
                 .Create("(merchantInventory)-[:PARTOF]->(tradedItem)")
                 .Delete("r2")
-                .Return(tradedItem => tradedItem.As<Item>()).ResultsAsync.Result.FirstOrDefault();
+                .Return(tradedItem => tradedItem.As<Item>()).ResultsAsync).FirstOrDefault();
         }
 
-        public async Task CreateMemory(Npc c, string s)
+        public async Task CreateMemory(Npc c, Player player, string s)
         {
             var conversation = new ConversationNode { Id = Guid.NewGuid().ToString(), Summary = s };
 
-            await _graphClient.Cypher
-                .Create("(conversation:Conversation $x)")
-                .WithParam("x", conversation)
-                .ExecuteWithoutResultsAsync();
-
-            await _graphClient.Cypher
-               .Match("(npc:Character)", "(con:Conversation)")
-               .Where((Npc npc) => npc.Id == c.Id)
-               .AndWhere((ConversationNode con) => con.Id == conversation.Id)
-               .Create("(npc)-[:MEMORY]->(con)")
-               .ExecuteWithoutResultsAsync();
-
-            await _graphClient.Cypher
-               .Match("(player:Player)", "(con:Conversation)")
-               .Where((ConversationNode con) => con.Id == conversation.Id)
-               .Create($"(con)-[:MENTIONED]->(player)")
-               .ExecuteWithoutResultsAsync();
+            var created = await _graphClient.Cypher
+                .Match("(npc:Character)", "(p:Player)")
+                .Where((Npc npc) => npc.Id == c.Id)
+                .AndWhere((Player p) => p.Id == player.Id)
+                .Create("(npc)-[:REMEMBERS]->(con:Conversation $memory)-[:MENTIONS]->(p)")
+                .WithParam("memory", conversation)
+                .Set("con.CreatedAt = timestamp()")
+                .Return(con => con.As<ConversationNode>())
+                .ResultsAsync;
+            if (!created.Any())
+                throw new InvalidOperationException("Memory creation requires an existing NPC and player.");
 
         }
 
-        public void SetCombatEquipment(Npc npc)
+        public async Task SetCombatEquipment(Npc npc)
         {
             var equipped = new GraphRelationship(RelationshipConstants.Equipped, isDirectedOut: true);
 
-            npc.Armor = RelatedTo<Armor, GraphRelationship>(x => x.Id == npc.Id, y => true, equipped).ResultsAsync.Result.FirstOrDefault();
-            npc.Weapon = RelatedTo<Weapon, GraphRelationship>(x => x.Id == npc.Id, y => true, equipped).ResultsAsync.Result.FirstOrDefault();
+            npc.Armor = (await RelatedTo<Armor, GraphRelationship>(x => x.Id == npc.Id, y => true, equipped).ResultsAsync).FirstOrDefault();
+            npc.Weapon = (await RelatedTo<Weapon, GraphRelationship>(x => x.Id == npc.Id, y => true, equipped).ResultsAsync).FirstOrDefault();
         }
 
-        public async void SaveCombatEquipment(Npc npc)
+        public async Task SaveCombatEquipment(Npc npc)
         {
             var equipped = new GraphRelationship(RelationshipConstants.Equipped);
             if (npc.Armor != null)

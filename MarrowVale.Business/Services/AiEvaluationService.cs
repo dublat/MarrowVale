@@ -3,7 +3,6 @@ using MarrowVale.Business.Entities.Entities;
 using MarrowVale.Common.Contracts;
 using MarrowVale.Common.Prompts;
 using MarrowVale.Data.Contracts;
-using OpenAI_API.Completions;
 using System;
 using System.Threading.Tasks;
 
@@ -22,7 +21,7 @@ namespace MarrowVale.Common.Evaluator
             _openAiEvaluationRepository = openAiEvaluationRepository;
         }
 
-        public async Task<Evaluation> CreateEvaluation(CompletionResult result, string apiName, StandardPrompt prompt, OpenAiSettings settings)
+        public async Task<Evaluation> CreateEvaluation(AiResult result, string apiName, string prompt, string type, string subtype, OpenAiSettings settings)
         {
             var evaluation = new Evaluation
             {
@@ -30,8 +29,8 @@ namespace MarrowVale.Common.Evaluator
                 ApiName = apiName,
                 Engine = result.Model,
                 Prompt = prompt.ToString(),
-                Response = result.ToString(),
-                ResponseTime = result.ProcessingTime,
+                Response = result.Text,
+                ResponseTime = result.Duration,
                 FrequencyPenalty = settings.FrequencyPenalty,
                 MaxTokens = settings.MaxTokens,
                 MultipleStopSequences = settings.MultipleStopSequences,
@@ -42,13 +41,12 @@ namespace MarrowVale.Common.Evaluator
                 TopP = settings.TopP
             };
 
-            evaluation.TokenCount = estimateTokens(evaluation);
-            evaluation.Cost = estimateCost(evaluation);
-            evaluation.Rating = ratePrompt(prompt, result);
+            evaluation.TokenCount = result.TotalTokens;
+            evaluation.Rating = ratePrompt(prompt, result.Text);
 
 
-            var promptType = new PromptType { Name = prompt.Type };
-            var promptSubType = new PromptSubType { Name = prompt.SubType };
+            var promptType = new PromptType { Name = type };
+            var promptSubType = new PromptSubType { Name = subtype };
             await _promptRepository.EnsurePromptCreated(promptType, promptSubType);
             await _openAiEvaluationRepository.CreateEvaluation(promptType, promptSubType, evaluation);
 
@@ -58,27 +56,7 @@ namespace MarrowVale.Common.Evaluator
         }
 
 
-        private int estimateTokens(Evaluation evaluation)
-        {
-            return evaluation.Prompt.Length / 4;
-        }
-        private decimal estimateCost(Evaluation evaluation)
-        {
-            decimal pricePerThousandTokens = 0;
-            if (evaluation.Engine == OpenAI_API.Models.Model.AdaText.ModelID)
-                pricePerThousandTokens = 0.0008m;
-            if (evaluation.Engine == OpenAI_API.Models.Model.BabbageText.ModelID)
-                pricePerThousandTokens = 0.0008m;
-            if (evaluation.Engine == OpenAI_API.Models.Model.CurieText.ModelID)
-                pricePerThousandTokens = 0.0008m;
-            if (evaluation.Engine == OpenAI_API.Models.Model.DavinciText.ModelID)
-                pricePerThousandTokens = 0.0008m;
-
-            return evaluation.TokenCount * (pricePerThousandTokens / 1000);
-
-        }
-
-        private int? ratePrompt(StandardPrompt prompt, CompletionResult response)
+        private int? ratePrompt(string prompt, string response)
         {
             if (!_appSettingsProvider.AskForRating)
                 return null;
@@ -88,14 +66,15 @@ namespace MarrowVale.Common.Evaluator
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("-----------------------------------");
             Console.ForegroundColor = ConsoleColor.DarkYellow;
-            Console.WriteLine(response.ToString());
+            Console.WriteLine(response);
 
             int ratingNumber = -1;
-            while (ratingNumber < 0 || ratingNumber > 10)
+            while (ratingNumber < 1 || ratingNumber > 10)
             {
                 Console.WriteLine("Rate Prompt (1-10):");
                 var rating = Console.ReadLine();
-                Int32.TryParse(rating, out ratingNumber);
+                if (rating == null) return null;
+                int.TryParse(rating, out ratingNumber);
             }
 
             Console.Clear();

@@ -20,10 +20,10 @@ namespace MarrowVale.Data.Repositories
 
         }
 
-        public Deity DefaultDeity()
+        public async Task<Deity> DefaultDeity()
         {
             var defaultEntityname = "Mithras";
-            return GetByName(defaultEntityname).Result;
+            return (await GetByName(defaultEntityname));
         }
     }
 }

@@ -7,7 +7,7 @@ namespace MarrowVale.Data.Contracts
     public interface IOpenAiSettingRepository : IBaseRepository<OpenAiSettings>
     {
         Task CreateSetting(string promptType, OpenAiSettings settings, string subPromptType = null);
-        OpenAiSettings GetSetting(string promptType, string promptSubType);
+        Task<OpenAiSettings> GetSetting(string promptType, string promptSubType);
         Task UpdateDefaultPromptSetting();
         Task CreatePrompts(PromptType promptType, string subType = null);
     }

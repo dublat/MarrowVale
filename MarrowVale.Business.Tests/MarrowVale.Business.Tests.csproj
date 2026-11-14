@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
 
     <IsPackable>false</IsPackable>
 
@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MarrowVale.Business.Entities\MarrowVale.Business.Entities.csproj" />
+    <ProjectReference Include="..\MarrowVale.Business\MarrowVale.Business.csproj" />
   </ItemGroup>
 
 </Project>

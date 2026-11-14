@@ -29,10 +29,10 @@ namespace MarrowVale.Business.Services
         }
 
    
-        public MarrowValeMessage OpenDoor(Player player, Command command)
+        public async Task<MarrowValeMessage> OpenDoor(Player player, Command command)
         {
             var message = new MarrowValeMessage();
-            var door = _doorRepository.GetById(command.DirectObjectNode.Id).Result;
+            var door = await _doorRepository.GetById(command.DirectObjectNode.Id);
 
             if (door.IsOpen)
             {
@@ -50,16 +50,16 @@ namespace MarrowVale.Business.Services
             //    return message;
             //}
 
-            _doorRepository.OpenDoor(door);
+            await _doorRepository.OpenDoor(door);
             message.ResultText = "Door Open PlaceHolder";
 
             return message;
         }
 
-        public MarrowValeMessage CloseDoor(Player player, Command command)
+        public async Task<MarrowValeMessage> CloseDoor(Player player, Command command)
         {
             var message = new MarrowValeMessage();
-            var door = _doorRepository.GetById(command.DirectObjectNode.Id).Result;
+            var door = await _doorRepository.GetById(command.DirectObjectNode.Id);
 
             if (!door.IsOpen)
             {
@@ -72,16 +72,16 @@ namespace MarrowVale.Business.Services
                 return message;
             }
 
-            _doorRepository.CloseDoor(door);
+            await _doorRepository.CloseDoor(door);
             message.ResultText = "Door Close PlaceHolder";
             return message;
         }
 
 
-        public MarrowValeMessage UnlockDoor(Player player, Command command)
+        public async Task<MarrowValeMessage> UnlockDoor(Player player, Command command)
         {
             var message = new MarrowValeMessage();
-            var door = _doorRepository.GetById(command.DirectObjectNode.Id).Result;
+            var door = await _doorRepository.GetById(command.DirectObjectNode.Id);
 
             if (door.IsOpen)
             {
@@ -93,23 +93,23 @@ namespace MarrowVale.Business.Services
                 message.ErrorText = "Door is already unlocked placeholder";
                 return message;
             }
-            else if (!_doorRepository.HasKey(player, door))
+            else if (!await _doorRepository.HasKey(player, door))
             {
                 message.ErrorText = "Unable to unlock the door";
                 return message;
             }
 
             door.IsUnlocked = true;
-            _doorRepository.Update(door);
+            await _doorRepository.Update(door);
             message.ResultText = "Door unlocked PlaceHolder";
 
             return message;
         }
 
-        public MarrowValeMessage LockDoor(Player player, Command command)
+        public async Task<MarrowValeMessage> LockDoor(Player player, Command command)
         {
             var message = new MarrowValeMessage();
-            var door = _doorRepository.GetById(command.DirectObjectNode.Id).Result;
+            var door = await _doorRepository.GetById(command.DirectObjectNode.Id);
 
             if (door.IsOpen)
             {
@@ -121,14 +121,14 @@ namespace MarrowVale.Business.Services
                 message.ErrorText = "Door is already locked placeholder";
                 return message;
             }
-            else if (!_doorRepository.HasKey(player, door))
+            else if (!await _doorRepository.HasKey(player, door))
             {
                 message.ErrorText = "Unable to lock the door";
                 return message;
             }
 
             door.IsUnlocked = false;
-            _doorRepository.Update(door);
+            await _doorRepository.Update(door);
             message.ResultText = "Door locked PlaceHolder";
 
             return message;
@@ -140,15 +140,15 @@ namespace MarrowVale.Business.Services
         }
 
 
-        public MarrowValeMessage PickUpItem(Command command, Player player)
+        public async Task<MarrowValeMessage> PickUpItem(Command command, Player player)
         {
             var message = new MarrowValeMessage();
 
-            var item = _itemRepository.GetChildrenById(command.DirectObjectNode.Id).Result;
-            var currentLocation = _playerRepository.GetPlayerLocation(player);
-            if (_locationRepository.IsItemAtLocation(currentLocation, item))
+            var item = await _itemRepository.GetChildrenById(command.DirectObjectNode.Id);
+            var currentLocation = await _playerRepository.GetPlayerLocation(player);
+            if (await _locationRepository.IsItemAtLocation(currentLocation, item))
             {
-                _itemRepository.TransferItem(player, item);
+                await _itemRepository.TransferItem(player, item);
                 message.ResultText = "Item aquired Placeholder";
             }
             else
@@ -158,7 +158,7 @@ namespace MarrowVale.Business.Services
             return message;
         }
 
-        public MarrowValeMessage DropItem(Command command, Player player)
+        public async Task<MarrowValeMessage> DropItem(Command command, Player player)
         {
             var message = new MarrowValeMessage();
             if (command.DirectObjectNode == null)
@@ -167,12 +167,12 @@ namespace MarrowVale.Business.Services
                 return message;
             }
 
-            var item = _itemRepository.GetChildrenById(command.DirectObjectNode.Id).Result;
-            var currentLocation = _playerRepository.GetPlayerLocation(player);
+            var item = await _itemRepository.GetChildrenById(command.DirectObjectNode.Id);
+            var currentLocation = await _playerRepository.GetPlayerLocation(player);
             var isItemOwnedByPlayer = player.Inventory.Items.Any(x => x.Id == item.Id);
             if (isItemOwnedByPlayer)
             {
-                _itemRepository.TransferItem(currentLocation, item);
+                await _itemRepository.TransferItem(currentLocation, item);
                 message.ResultText = "Item dropped Placeholder";
             }
             else

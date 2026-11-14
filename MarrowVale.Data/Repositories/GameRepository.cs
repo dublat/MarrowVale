@@ -25,46 +25,32 @@ namespace MarrowVale.Data.Repositories
 
         public Game LoadGame(string fileName)
         {
-            //var filePath = generateFilePath(fileName);
-            //var gameFile = File.ReadAllText(filePath);
-            //return JsonConvert.DeserializeObject<Game>(gameFile, Settings);
-            return null;
+            if (string.IsNullOrWhiteSpace(fileName)) return null;
+            var path = generateFilePath(fileName);
+            return File.Exists(path) ? JsonConvert.DeserializeObject<Game>(File.ReadAllText(path), Settings) : null;
         }
 
         public void SaveGame(Game game, string oldFileName, string newFileName)
         {
-            deleteOldGame(oldFileName);
-            saveGameFile(game, newFileName);
-        }
-
-        private void saveGameFile(Game game, string fileName)
-        {
-            var filePath = generateFilePath(fileName);
-
-            var newJson = JsonConvert.SerializeObject(game, Formatting.Indented, Settings);
-
-            File.WriteAllText(filePath, newJson);
-        }
-
-        private void deleteOldGame(string fileName)
-        {
-            if (string.IsNullOrWhiteSpace(fileName))
+            var path = generateFilePath(newFileName);
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
+            var temporary = path + "." + Guid.NewGuid() + ".tmp";
+            try
             {
-                return;
+                File.WriteAllText(temporary, JsonConvert.SerializeObject(game, Formatting.Indented, Settings));
+                File.Move(temporary, path, overwrite: true);
             }
-
-            var filePath = generateFilePath(fileName);
-            if (File.Exists(filePath))
+            finally
             {
-                return;
+                File.Delete(temporary);
             }
-
-            File.Delete(filePath);
         }
 
         private string generateFilePath(string fileName)
         {
-            return $"{Environment.CurrentDirectory}\\Game Tools\\DataFiles\\{fileName}.json";
+            if (string.IsNullOrWhiteSpace(fileName) || fileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+                throw new ArgumentException("Invalid game save name.", nameof(fileName));
+            return Path.GetFullPath(Path.Combine(_appSettingsProvider.DataFilesLocation, fileName + ".json"));
         }
     }
 }

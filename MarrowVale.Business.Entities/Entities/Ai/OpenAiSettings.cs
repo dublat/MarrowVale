@@ -1,5 +1,4 @@
 ﻿using MarrowVale.Business.Entities.Entities;
-using OpenAI_API;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,7 +24,7 @@ namespace MarrowVale.Common.Evaluator
             this.FrequencyPenalty = frequencyPenalty;
             this.PresencePenalty = presencePenalty;
             this.EngineName = engineName;
-            //this.MultipleStopSequences = stopSequences;
+            this.MultipleStopSequences = stopSequences;
         }
 
         public bool? Echo { get; set; }

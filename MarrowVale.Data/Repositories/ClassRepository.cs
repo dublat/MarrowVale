@@ -19,7 +19,7 @@ namespace MarrowVale.Data.Repositories
         {
             _logger = logger.CreateLogger<ClassRepository>();
             _appSettingsProvider = appSettingsProvider;
-            ClassFile = File.ReadAllText(_appSettingsProvider.DataFilesLocation + "\\CLassList.json");
+            ClassFile = File.ReadAllText(Path.Combine(System.AppContext.BaseDirectory, _appSettingsProvider.DataFilesLocation, "ClassList.json"));
         }
 
         public IList<Class> GetClasses()
