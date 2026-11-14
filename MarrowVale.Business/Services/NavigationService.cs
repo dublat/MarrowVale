@@ -1,13 +1,12 @@
-﻿using MarrowVale.Business.Contracts;
+﻿using System.Threading.Tasks;
+using MarrowVale.Business.Contracts;
 using MarrowVale.Business.Entities.Commands;
 using MarrowVale.Business.Entities.Entities;
 using MarrowVale.Business.Entities.Enums;
 using MarrowVale.Data.Contracts;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace MarrowVale.Business.Services
 {
@@ -40,21 +39,21 @@ namespace MarrowVale.Business.Services
         }
 
 
-        public bool IsPathValid(Location playerLocation, Location destination)
+        public async Task<bool> IsPathValid(Location playerLocation, Location destination)
         {
-            return _locationRepository.IsPathConnected(playerLocation, destination);
+            return playerLocation != null && destination != null && await _locationRepository.IsPathConnected(playerLocation, destination);
         }
 
 
-        public MarrowValeMessage Enter(Command command, Player player)
+        public async Task<MarrowValeMessage> Enter(Command command, Player player)
         {
             var message = new MarrowValeMessage();
-            var playerLocation = _playerRepository.GetPlayerLocation(player);
-            var roomDestination = enterDestination(command);
-            if (IsPathValid(playerLocation, roomDestination))
+            var playerLocation = await _playerRepository.GetPlayerLocation(player);
+            var roomDestination = await EnterDestination(command);
+            if (await IsPathValid(playerLocation, roomDestination))
             {
-                _playerRepository.MovePlayer(player, playerLocation.Id, roomDestination.Id);
-                var roomDescription = generateRoomFlavorText(roomDestination);
+                await _playerRepository.MovePlayer(player, playerLocation.Id, roomDestination.Id);
+                var roomDescription = await GenerateRoomFlavorText(roomDestination);
                 message.ResultText = roomDescription;
             }
             else
@@ -65,15 +64,15 @@ namespace MarrowVale.Business.Services
             return message;
         }
 
-        public MarrowValeMessage Exit(Command command, Player player)
+        public async Task<MarrowValeMessage> Exit(Command command, Player player)
         {
             var message = new MarrowValeMessage();
-            var playerLocation = _playerRepository.GetPlayerLocation(player);
-            var destination = exitDestination(command);
-            if (IsPathValid(playerLocation, destination))
+            var playerLocation = await _playerRepository.GetPlayerLocation(player);
+            var destination = await exitDestination(command);
+            if (await IsPathValid(playerLocation, destination))
             {
-                _playerRepository.MovePlayer(player, playerLocation.Id, destination.Id);
-                message = CurrentLocationDescription(player);
+                await _playerRepository.MovePlayer(player, playerLocation.Id, destination.Id);
+                message = await CurrentLocationDescription(player);
             }
             else
             {
@@ -83,16 +82,16 @@ namespace MarrowVale.Business.Services
             return message;
         }
 
-        public MarrowValeMessage TraversePath(Command command, Player player)
+        public async Task<MarrowValeMessage> TraversePath(Command command, Player player)
         {
             var message = new MarrowValeMessage();
-            var playerLocation = _playerRepository.GetPlayerLocation(player);
-            var endLocation = pathDestination(command);
+            var playerLocation = await _playerRepository.GetPlayerLocation(player);
+            var endLocation = await pathDestination(command);
 
-            if (IsPathValid(playerLocation, endLocation))
+            if (await IsPathValid(playerLocation, endLocation))
             {
-                _playerRepository.MovePlayer(player, playerLocation.Id, endLocation.Id);
-                message.ResultText = generateRoadFlavorText(endLocation);
+                await _playerRepository.MovePlayer(player, playerLocation.Id, endLocation.Id);
+                message.ResultText = await generateRoadFlavorText(endLocation);
             }
             else
             {
@@ -130,53 +129,54 @@ namespace MarrowVale.Business.Services
 
 
 
-        private Room enterDestination(Command command)
+        private async Task<Room> EnterDestination(Command command)
         {
             var destinationId = command.DirectObjectNode.Id;
             var buildingEntity = "Building";
 
             if (command.DirectObjectNode.Labels.Contains(buildingEntity))
-                return _locationRepository.GetBuildingEntrance(destinationId);
+                return await _locationRepository.GetBuildingEntrance(destinationId);
             else
-                return _roomRepository.Single(x => x.Id == destinationId).Result;
+                return await _roomRepository.Single(x => x.Id == destinationId);
         }
 
-        private Location exitDestination(Command command)
+        private async Task<Location> exitDestination(Command command)
         {
             var destinationId = command.DirectObjectNode.Id;
             var buildingEntity = "Building";
 
             if (command.DirectObjectNode.Labels.Contains(buildingEntity))
-            return _locationRepository.GetBuildingExit(command.DirectObjectNode.Id);
+            return await _locationRepository.GetBuildingExit(command.DirectObjectNode.Id);
             else
-                return _locationRepository.Single(x => x.Id == destinationId).Result;
+                return await _locationRepository.Single(x => x.Id == destinationId);
         }
 
 
-        private Location pathDestination(Command command)
+        private async Task<Location> pathDestination(Command command)
         {
             var destinationId = command.DirectObjectNode.Id;
-            return _locationRepository.Single(x => x.Id == destinationId).Result;
+            return await _locationRepository.Single(x => x.Id == destinationId);
         }
 
 
-        public MarrowValeMessage CurrentLocationDescription(Player player)
+        public async Task<MarrowValeMessage> CurrentLocationDescription(Player player)
         {
             var message = new MarrowValeMessage();
 
-            var currentLocationType = _playerRepository.PlayerLocationType(player);
-            var currentLocation = _playerRepository.GetPlayerLocation(player);
+            var currentLocationType = await _playerRepository.PlayerLocationType(player);
+            var currentLocation = await _playerRepository.GetPlayerLocation(player);
             if (currentLocationType.Contains("Road"))
             {
-                message.ResultText = generateRoadFlavorText(currentLocation);
+                message.ResultText = await generateRoadFlavorText(currentLocation);
             }
             else if (currentLocationType.Contains("Building"))
             {
-                message.ResultText = generateBuildingFlavorText(currentLocation);
+                message.ResultText = await generateBuildingFlavorText(currentLocation);
             }
             else if (currentLocationType.Contains("Room"))
             {
-                message.ResultText = generateRoomFlavorText(currentLocation);
+
+                message.ResultText = await GenerateRoomFlavorText(currentLocation);
             }
             else
             {
@@ -187,54 +187,56 @@ namespace MarrowVale.Business.Services
 
 
 
-        private string generateRoomFlavorText(Location room)
+        private async Task<string> GenerateRoomFlavorText(Location room)
         {
             var input = room.DescriptionPromptInput();
             room.Description = input.ToString();
             WorldContextService.ContextNodes.Add(room);
 
             var prompt = _promptService.GenerateSummaryDescription(input.ToString(), SummaryTypeEnum.Room);
-            var roomOutput = _aiService.Complete(prompt).Result;
-            var peopleInsideRoom = _locationRepository.GetNpcsAtLocation(room);
+            var roomOutput = await _aiService.Complete(prompt);
+            var peopleInsideRoom = await _locationRepository.GetNpcsAtLocation(room);
 
             var npcInput = new StringBuilder($"Location: {roomOutput}\n");
             foreach (var npc in peopleInsideRoom)
             {
-                npc.Description = npc.DescriptionPromptInput().ToString();
-                WorldContextService.ContextNodes.Add(npc);
-                npcInput.Append(npc.Description);
+                if (npc.Visible)
+                {
+                    npc.Description = npc.DescriptionPromptInput();
+                    WorldContextService.ContextNodes.Add(npc);
+                    npcInput.Append(npc.Description);
+                }
             }
 
             var npcPrompt = _promptService.GenerateSummaryDescription(npcInput.ToString(), SummaryTypeEnum.Npcs);
-            var npcOutput = _aiService.Complete(npcPrompt).Result;
+            var npcOutput = await _aiService.Complete(npcPrompt);
 
-            var connectingRooms = _locationRepository.GetConnectingRooms(room);
+            var connectingRooms = await _locationRepository.GetConnectingRooms(room);
             var connectingRoomsInput = new StringBuilder();
-            foreach (var r in connectingRooms)
+            foreach (var connectingRoom in connectingRooms)
             {
-                r.Description = r.ShortDescriptionPrompt().ToString();
-                WorldContextService.ContextNodes.Add(r);
-                connectingRoomsInput.Append(r.Description);
+                connectingRoom.Description = connectingRoom.ShortDescriptionPrompt().ToString();
+                WorldContextService.ContextNodes.Add(connectingRoom);
+                connectingRoomsInput.Append(connectingRoom.Description);
             }
             var connectingRoomPrompt = _promptService.GenerateSummaryDescription(connectingRoomsInput.ToString(), SummaryTypeEnum.ConnectingRooms);
-            var connectingRoomOutput = _aiService.Complete(connectingRoomPrompt).Result;
+            var connectingRoomOutput = await _aiService.Complete(connectingRoomPrompt);
 
 
-            var items = _itemRepository.GetItemsAtLocation(room.Id);
+            var items = await _itemRepository.GetItemsAtLocation(room.Id);
             var itemsString = new StringBuilder("Items in room:");
             foreach (var item in items)
             {
                 itemsString.Append($"Name: {item.Name}");
             }
 
-
             return roomOutput + npcOutput + connectingRoomOutput + itemsString.ToString();
         }
 
-        private string generateRoadFlavorText(Location road)
+        private async Task<string> generateRoadFlavorText(Location road)
         {
-            var nearbyBuildings = _locationRepository.GetNearbyBuildings(road);
-            var nearbyRoads = _locationRepository.GetNearbyRoads(road);
+            var nearbyBuildings = await _locationRepository.GetNearbyBuildings(road);
+            var nearbyRoads = await _locationRepository.GetNearbyRoads(road);
             var input = new StringBuilder();
             foreach (var building in nearbyBuildings)
             {
@@ -248,24 +250,24 @@ namespace MarrowVale.Business.Services
             }
             var prompt = _promptService.GenerateSummaryDescription(input.ToString(), SummaryTypeEnum.Road);
 
-            return _aiService.Complete(prompt).Result;
+            return await _aiService.Complete(prompt);
         }
 
-        private string generateBuildingFlavorText(Location location)
+        private async Task<string> generateBuildingFlavorText(Location location)
         {
-            var building = _buildingRepository.Single(x => x.Id == location.Id).Result;
+            var building = await _buildingRepository.Single(x => x.Id == location.Id);
             var input = building.DescriptionPromptInput();
             var roomPrompt = _promptService.GenerateSummaryDescription(input.ToString(), SummaryTypeEnum.Building);
-            var roomOutput = _aiService.Complete(roomPrompt).Result;
+            var roomOutput = await _aiService.Complete(roomPrompt);
 
-            var peopleInsideRoom = _locationRepository.GetNpcsAtLocation(location);
+            var peopleInsideRoom = await _locationRepository.GetNpcsAtLocation(location);
             var npcInput = _promptService.GenerateSummaryDescription(input.ToString(), SummaryTypeEnum.Npcs);
             foreach (var npc in peopleInsideRoom)
             {
                 npcInput.Input.Concat(npc.DescriptionPromptInput().ToString());
             }
             var npcPrompt = _promptService.GenerateSummaryDescription(npcInput.ToString(), SummaryTypeEnum.Npcs);
-            var npcOutput = _aiService.Complete(roomPrompt).Result;
+            var npcOutput = await _aiService.Complete(roomPrompt);
 
 
             return roomOutput + npcOutput;

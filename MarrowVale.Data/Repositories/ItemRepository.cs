@@ -17,11 +17,11 @@ namespace MarrowVale.Data.Repositories
         {
         }
 
-        public IEnumerable<Item> GetItemsAtLocation(string locationId)
+        public async Task<IEnumerable<Item>> GetItemsAtLocation(string locationId)
         {
             var at = new AtRelation { IsDirectedOut = false };
             var preQuery = FromChildCategory();
-            return RelatedFrom<Location, GraphRelationship>(x => true, y => y.Id == locationId, at, preQuery: preQuery).ResultsAsync.Result;
+            return (await RelatedFrom<Location, GraphRelationship>(x => true, y => y.Id == locationId, at, preQuery: preQuery).ResultsAsync);
         }
 
         public async Task TransferItem(Player player, Item item)

@@ -57,7 +57,7 @@ namespace MarrowVale.Data.Repositories
             return true;
         }
 
-        public bool IsDoorLockable(Player player, Door door)
+        public async Task<bool> IsDoorLockable(Player player, Door door)
         {
             var own = RelationshipConstants.Own;
             var at = RelationshipConstants.At;
@@ -70,7 +70,7 @@ namespace MarrowVale.Data.Repositories
                 .AndWhere((Door d) => d.Id == door.Id)
                 .Return(x => x.As<Player>());
 
-            return query.ResultsAsync.Result.Any();
+            return (await query.ResultsAsync).Any();
         }
 
         public bool IsDoorOpenable(Player player, Door door)
@@ -78,7 +78,7 @@ namespace MarrowVale.Data.Repositories
             throw new System.NotImplementedException();
         }
 
-        public bool HasKey(Player player, Door door)
+        public async Task<bool> HasKey(Player player, Door door)
         {
             var own = RelationshipConstants.Own;
             var at = RelationshipConstants.At;
@@ -91,7 +91,7 @@ namespace MarrowVale.Data.Repositories
                 .AndWhere((Door d) => d.Id == door.Id)
                 .Return(x => x.As<Player>());
 
-            return query.ResultsAsync.Result.Any();
+            return (await query.ResultsAsync).Any();
         }
 
     }

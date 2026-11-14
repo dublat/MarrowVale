@@ -17,11 +17,12 @@ namespace MarrowVale.Business.Services
 
         public void PrintArtCentered(string[] art)
         {
-            Console.WindowWidth = _globalItemsProvider.WindowWidth;
+            if (OperatingSystem.IsWindows() && !Console.IsOutputRedirected) Console.WindowWidth = _globalItemsProvider.WindowWidth;
             Console.WriteLine(Environment.NewLine);
             foreach (var line in art)
             {
-                Console.SetCursorPosition((Console.WindowWidth - line.Length) / 2, Console.CursorTop);
+                if (!Console.IsOutputRedirected)
+                    Console.SetCursorPosition(Math.Max(0, (Console.WindowWidth - line.Length) / 2), Console.CursorTop);
                 Console.WriteLine(line);
             }
 
@@ -30,11 +31,12 @@ namespace MarrowVale.Business.Services
 
         public void PrintArt(string[] art)
         {
-            Console.WindowWidth = _globalItemsProvider.WindowWidth;
+            if (OperatingSystem.IsWindows() && !Console.IsOutputRedirected) Console.WindowWidth = _globalItemsProvider.WindowWidth;
             Console.WriteLine(Environment.NewLine);
             foreach (var line in art)
             {
-                Console.SetCursorPosition((Console.WindowWidth - line.Length) / 2, Console.CursorTop);
+                if (!Console.IsOutputRedirected)
+                    Console.SetCursorPosition(Math.Max(0, (Console.WindowWidth - line.Length) / 2), Console.CursorTop);
                 Console.WriteLine(line);
             }
 

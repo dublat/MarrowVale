@@ -9,8 +9,8 @@ namespace MarrowVale.Business.Contracts
 {
     public interface ITextGenerator
     {
-        public string GenerateCharacterName(Npc person);
-        public string GenerateCharacterDescription(Npc person);
+        public Task<string> GenerateCharacterName(Npc person);
+        public Task<string> GenerateCharacterDescription(Npc person);
         public string GenerateConversationSummary(string conversation);
         public string GenerateEventSummary(string eventText);
         public string GenerateCityName();

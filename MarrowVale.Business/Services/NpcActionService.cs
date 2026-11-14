@@ -52,31 +52,31 @@ namespace MarrowVale.Business.Services
             throw new NotImplementedException();
         }
 
-        public void PurchaseItem(Npc seller, Player player, string prompt = null, string conversation = null)
+        public async Task PurchaseItem(Npc seller, Player player, string prompt = null, string conversation = null)
         {
             if (!string.IsNullOrWhiteSpace(prompt))
             {
-                var item = _worldContextService.DirectObjectCommand<Item>(prompt, conversation, seller, CommandEnum.Purchase);
+                var item = await _worldContextService.DirectObjectCommand<Item>(prompt, conversation, seller, CommandEnum.Purchase);
 
                 if (item != null)
                 {
                     _printService.Type($"Confirm purchase of {item.Name} for {item.BaseWorth} bronze");
                     if (_printService.ReadInput() == "Y")
                     {
-                        _npcRepository.BuyItem(seller, player, item, item.BaseWorth);
+                        await _npcRepository.BuyItem(seller, player, item, item.BaseWorth);
                         Console.WriteLine("Purchase Complete");
                     }
                         
                 }
                 else
                 {
-                    PurchaseItem(seller, player);
+                    await PurchaseItem(seller, player);
                 }
             }
             else
             {
-                var items = _npcRepository.MerchantInventory(seller);
-                if (items.Count() == 0 || items == null)
+                var items = await _npcRepository.MerchantInventory(seller);
+                if (items == null || !items.Any())
                     _printService.Type($"{seller?.FullName} does not have any sellable items in their inventory:");
 
                 else
@@ -91,30 +91,30 @@ namespace MarrowVale.Business.Services
             }
         }
 
-        public void SellItem(Npc merchant, Player player, string prompt = null, string conversation = null)
+        public async Task SellItem(Npc merchant, Player player, string prompt = null, string conversation = null)
         {
             if (!string.IsNullOrWhiteSpace(prompt))
             {
-                var item = _worldContextService.DirectObjectCommand<Item>(prompt, conversation, player, CommandEnum.Purchase);
+                var item = await _worldContextService.DirectObjectCommand<Item>(prompt, conversation, player, CommandEnum.Sell);
 
                 if (item != null)
                 {
                     _printService.Type($"Confirm sale of {item.Name} for {item.BaseWorth} bronze");
                     if (_printService.ReadInput() == "Y")
                     {
-                        _npcRepository.SellItem(merchant, player, item, item.BaseWorth);
+                        await _npcRepository.SellItem(merchant, player, item, item.BaseWorth);
                         Console.WriteLine("Purchase Complete");
                     }
 
                 }
                 else
                 {
-                    PurchaseItem(merchant, player);
+                    await SellItem(merchant, player);
                 }
             }
             else
             {
-                var items = _playerRepository.GetInventory(player).Items.ToList();
+                var items = (await _playerRepository.GetInventory(player)).Items.ToList();
                 if (items.Count == 0 || items == null)
                     _printService.Type($"You do not have any sellable items in your inventory:");
                 else

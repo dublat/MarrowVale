@@ -1,4 +1,5 @@
-﻿using MarrowVale.Business.Contracts;
+﻿using System.Threading.Tasks;
+using MarrowVale.Business.Contracts;
 using MarrowVale.Business.Entities.Commands;
 using MarrowVale.Business.Entities.Entities;
 using MarrowVale.Business.Entities.Enums;
@@ -39,15 +40,15 @@ namespace MarrowVale.Business.Services
         }
 
 
-        public void ProcessCommand(Command command, Player player)
+        public async Task ProcessCommand(Command command, Player player)
         {
             do
             {
-                var message = ProcessCommandMap(command, player);
+                var message = await ProcessCommandMap(command, player);
                 if (!string.IsNullOrWhiteSpace(message.ResultText)) 
                     _printService.Type(message.ResultText);
                 else if (!string.IsNullOrWhiteSpace(message.ErrorText))
-                    _divineInterventionService.HandleError(command.Input, error: message.ErrorText);
+                    _printService.PrintDivineText(await _divineInterventionService.HandleError(command.Input, error: message.ErrorText));
 
                 command = message.NextCommand;
             }
@@ -57,34 +58,34 @@ namespace MarrowVale.Business.Services
         }
 
 
-        private MarrowValeMessage ProcessCommandMap(Command command, Player player) =>
+        private async Task<MarrowValeMessage> ProcessCommandMap(Command command, Player player) =>
             command?.Type switch
             {
-                CommandEnum.Enter => _navigationService.Enter(command, player),
-                CommandEnum.Traverse => _navigationService.TraversePath(command, player),
-                CommandEnum.Speak => speak(command, player),
-                CommandEnum.Inventory => inspectInventory(player),
-                CommandEnum.Health => inspectHealth(player),
-                CommandEnum.Attack => attack(command, player),
-                CommandEnum.Exit => _navigationService.Exit(command, player),
-                CommandEnum.LookAround => _navigationService.CurrentLocationDescription(player),
-                CommandEnum.Take => _enviornmentalInteractionService.PickUpItem(command, player),
-                CommandEnum.Drop => _enviornmentalInteractionService.DropItem(command, player),
-                CommandEnum.Lock => _enviornmentalInteractionService.LockDoor(player, command),
-                CommandEnum.Unlock => _enviornmentalInteractionService.UnlockDoor(player, command),
-                CommandEnum.Open => _enviornmentalInteractionService.OpenDoor(player, command),
-                CommandEnum.Close => _enviornmentalInteractionService.CloseDoor(player, command),
+                CommandEnum.Enter => await _navigationService.Enter(command, player),
+                CommandEnum.Traverse => await _navigationService.TraversePath(command, player),
+                CommandEnum.Speak => await speak(command, player),
+                CommandEnum.Inventory => await inspectInventory(player),
+                CommandEnum.Health => await inspectHealth(player),
+                CommandEnum.Attack => await attack(command, player),
+                CommandEnum.Exit => await _navigationService.Exit(command, player),
+                CommandEnum.LookAround => await _navigationService.CurrentLocationDescription(player),
+                CommandEnum.Take => await _enviornmentalInteractionService.PickUpItem(command, player),
+                CommandEnum.Drop => await _enviornmentalInteractionService.DropItem(command, player),
+                CommandEnum.Lock => await _enviornmentalInteractionService.LockDoor(player, command),
+                CommandEnum.Unlock => await _enviornmentalInteractionService.UnlockDoor(player, command),
+                CommandEnum.Open => await _enviornmentalInteractionService.OpenDoor(player, command),
+                CommandEnum.Close => await _enviornmentalInteractionService.CloseDoor(player, command),
                 _ => new MarrowValeMessage { ErrorText = "Command Is Not Mapped to a function" }
             };
 
 
-        private MarrowValeMessage speak(Command command, Player player)
+        private async Task<MarrowValeMessage> speak(Command command, Player player)
         {
             var message = new MarrowValeMessage();
-            var npc = _npcRepository.Single(x => x.Id == command.DirectObjectNode.Id).Result;
-            if (isAbleToSpeakWith(player, npc))
+            var npc = command.DirectObjectNode == null ? null : await _npcRepository.GetById(command.DirectObjectNode.Id);
+            if (await isAbleToSpeakWith(player, npc))
             {
-                _dialogueService.Talk(player, npc);
+                await _dialogueService.Converse(player, npc);
                 message.ResultText = "Conversation Over";
             }
             else
@@ -96,20 +97,20 @@ namespace MarrowVale.Business.Services
         }
 
 
-        private bool isAbleToSpeakWith(Player player, Npc npc)
+        private async Task<bool> isAbleToSpeakWith(Player player, Npc npc)
         {
-            return _npcRepository.IsPlayerNearby(player, npc);
+            return await _npcRepository.IsPlayerNearby(player, npc);
         }
-        private bool isAbleToAttack(Player player, Npc npc)
+        private async Task<bool> isAbleToAttack(Player player, Npc npc)
         {
-            return _npcRepository.IsPlayerNearby(player, npc);
+            return await _npcRepository.IsPlayerNearby(player, npc);
         }
 
-        private MarrowValeMessage inspectInventory(Player player)
+        private async Task<MarrowValeMessage> inspectInventory(Player player)
         {
             var message = new MarrowValeMessage();
 
-            var inventory = _playerRepository.GetInventory(player);
+            var inventory = await _playerRepository.GetInventory(player);
             foreach (var item in inventory.Items)
             {
                 Console.WriteLine(item.GetShortDescription());
@@ -119,29 +120,30 @@ namespace MarrowVale.Business.Services
             return message;
         }
 
-        private MarrowValeMessage inspectHealth(Player p)
+        private async Task<MarrowValeMessage> inspectHealth(Player p)
         {
             var message = new MarrowValeMessage();
-            var player = _playerRepository.GetById(p.Id).Result;
+            var player = await _playerRepository.GetById(p.Id);
             message.ResultText = $"You are at {player.CurrentHealth}/{player.MaxHealth} health";
 
             return message;
         }
 
-        private MarrowValeMessage attack(Command command, Player player)
+        private async Task<MarrowValeMessage> attack(Command command, Player player)
         {
             var message = new MarrowValeMessage();
 
-            var npc = _npcRepository.GetById(command.DirectObjectNode.Id).Result;
-            _npcRepository.SetCombatEquipment(npc);
+            var npc = await _npcRepository.GetById(command.DirectObjectNode.Id);
 
-            if (isAbleToAttack(player, npc))
+
+            if (await isAbleToAttack(player, npc))
             {
-                message.ResultText = _combatService.Attack(player, npc);
+                await _npcRepository.SetCombatEquipment(npc);
+                message.ResultText = await _combatService.Attack(player, npc);
             }
             else
             {
-                message.ErrorText = _divineInterventionService.HandleError(command.Input, $"Unable to attack character {player?.Name ?? command?.DirectObjectNode?.Name}");
+                message.ErrorText = $"Unable to attack character {command?.DirectObjectNode?.Name}";
             }
 
             return message;

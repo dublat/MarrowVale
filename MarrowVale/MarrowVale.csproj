@@ -2,21 +2,15 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net5.0-windows</TargetFramework>
-    <UserSecretsId>56165aa1-b476-4fcd-8eb0-45bdbc62412b</UserSecretsId>
+    <TargetFramework>net10.0</TargetFramework>
+    <UserSecretsId>db151940-44d9-4e30-8718-b4115d9d3678</UserSecretsId>
     <Configurations>Debug;Release;Development</Configurations>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="7.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="7.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="7.0.0" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="NAudio" Version="2.1.0" />
-    <PackageReference Include="Neo4jClient" Version="5.1.6" />
+    <PackageReference Include="Neo4jClient" Version="5.1.11" />
   </ItemGroup>
 
   <ItemGroup>

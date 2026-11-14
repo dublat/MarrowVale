@@ -80,7 +80,7 @@ namespace MarrowVale.Business.Services
 
 
 
-        public async void GenerateBuildings()
+        public async Task GenerateBuildings()
         {
             var tresendarManor = new Building
             {
@@ -217,19 +217,19 @@ namespace MarrowVale.Business.Services
 
 
 
-            GenerateCharacters();
+            await GenerateCharacters();
         }
 
-        public void GenerateCharacters()
+        public async Task GenerateCharacters()
         {
             var (adam,eve) = _npcSeeds.GetOriginHumans();
 
-            AddCharacter(adam);
-            AddandRelateCharacter(eve);
-            GenerateChildren(adam, eve);
+            await AddCharacter(adam);
+            await AddandRelateCharacter(eve);
+            await GenerateChildren(adam, eve);
         }
 
-        public void GenerateChildren(Npc dad, Npc mom)
+        public async Task GenerateChildren(Npc dad, Npc mom)
         {
 
             var person = new Npc
@@ -252,21 +252,21 @@ namespace MarrowVale.Business.Services
             person.Armor.Id = Guid.NewGuid().ToString();
             person.Weapon.Id = Guid.NewGuid().ToString();
 
-            var name = _textGenerator.GenerateCharacterName(person);
+            var name = await _textGenerator.GenerateCharacterName(person);
             if (name == dad.Name || name ==  mom.Name)
                 name = $"{name} Jr.";
 
             person.Name = name;
-            person.Description = _textGenerator.GenerateCharacterDescription(person);
+            person.Description = await _textGenerator.GenerateCharacterDescription(person);
             person.AddRelationship(dad, RelationEnum.Parent);
             person.AddRelationship(mom, RelationEnum.Parent);
 
-            AddandRelateCharacter(person);
+            await AddandRelateCharacter(person);
 
 
             if (person.Age > 18 && !(person.Relationships.Any(x => x.Relation == RelationEnum.Married)))
             {
-                GeneratePartner(person);
+                await GeneratePartner(person);
             }
 
             if (person.Age > 18 && (person.Relationships.Any(x => x.Relation == RelationEnum.Married)))
@@ -277,13 +277,13 @@ namespace MarrowVale.Business.Services
 
                 for (int i = 0; i < numberOfChildren; i++)
                 {
-                    GenerateChildren(person, partner);
+                    await GenerateChildren(person, partner);
                 }
             }
 
         }
 
-        public void GeneratePartner(Npc partner)
+        public async Task GeneratePartner(Npc partner)
         {
             var person = new Npc
             {
@@ -304,23 +304,23 @@ namespace MarrowVale.Business.Services
             person.Armor.Id = Guid.NewGuid().ToString();
             person.Weapon.Id = Guid.NewGuid().ToString();
 
-            person.Name = _textGenerator.GenerateCharacterName(person);
-            person.Description = _textGenerator.GenerateCharacterDescription(person);
+            person.Name = await _textGenerator.GenerateCharacterName(person);
+            person.Description = await _textGenerator.GenerateCharacterDescription(person);
 
             person.AddRelationship(partner, RelationEnum.Married);
-            AddandRelateCharacter(person);
+            await AddandRelateCharacter(person);
 
         }
 
 
-        public async void AddCharacter(Npc character)
+        public async Task AddCharacter(Npc character)
         {
             await _graphClient.Cypher
                 .Create("(character:Character $newCharacter)")
                 .WithParam("newCharacter", character)
                 .ExecuteWithoutResultsAsync();
 
-            _npcRepository.SaveCombatEquipment(character);
+            await _npcRepository.SaveCombatEquipment(character);
 
 
             var allRooms = buildings.SelectMany(x => x.Rooms).ToList();
@@ -334,7 +334,7 @@ namespace MarrowVale.Business.Services
                 .ExecuteWithoutResultsAsync();
         }
 
-        public async void AddandRelateCharacter(Npc newCharacter)
+        public async Task AddandRelateCharacter(Npc newCharacter)
         {
 
             await _graphClient.Cypher
@@ -342,7 +342,7 @@ namespace MarrowVale.Business.Services
                 .WithParam("newCharacter", newCharacter)
                 .ExecuteWithoutResultsAsync();
 
-            _npcRepository.SaveCombatEquipment(newCharacter);
+            await _npcRepository.SaveCombatEquipment(newCharacter);
 
 
             var allRooms = buildings.SelectMany(x => x.Rooms).ToList();

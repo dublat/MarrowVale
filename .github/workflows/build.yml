@@ -1,0 +1,36 @@
+name: Build and test
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        configuration: [Debug, Release, Development]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - run: dotnet restore MarrowVale.sln
+      - run: dotnet build MarrowVale.sln --no-restore -c ${{ matrix.configuration }}
+      - run: dotnet test MarrowVale.sln --no-build -c ${{ matrix.configuration }}
+  memory:
+    runs-on: ubuntu-latest
+    services:
+      neo4j:
+        image: neo4j:4.4-community
+        env:
+          NEO4J_AUTH: neo4j/fixture-password
+        ports:
+          - 17474:7474
+        options: >-
+          --health-cmd "cypher-shell -u neo4j -p fixture-password 'RETURN 1'"
+          --health-interval 5s --health-timeout 10s --health-retries 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - run: dotnet test MarrowVale.Business.Tests --filter FullyQualifiedName~MemoryIntegrationTests
+        env:
+          MARROWVALE_CI_FIXTURE: 1

@@ -10,11 +10,11 @@ namespace MarrowVale.Business.Contracts
 {
     public interface IWorldContextService
     {
-        public GraphNode GetObjectLabelIdPair(string searchObject, Player owner, string input);
-        public T DirectObjectCommand<T>(string input, string context, GraphNode owner, CommandEnum command) where T : GraphNode;
+        public Task<GraphNode> GetObjectLabelIdPair(string searchObject, Player owner, string input);
+        public Task<T> DirectObjectCommand<T>(string input, string context, GraphNode owner, CommandEnum command) where T : GraphNode;
         public void AttachToContext(string label, string id, Object entity);
-        public string DescribeConnectedPaths(Player player);
-        public GraphNode ContextSearch(string searchTerm, string conversation);
-        public GraphNode ContextSearch(string searchTerm, GraphNode characterKnowledge);
+        public Task<string> DescribeConnectedPaths(Player player);
+        public Task<GraphNode> ContextSearch(string searchTerm, string conversation);
+        public Task<GraphNode> ContextSearch(string searchTerm, GraphNode characterKnowledge);
     }
 }

@@ -2,11 +2,10 @@
 using MarrowVale.Business.Entities.Entities;
 using MarrowVale.Business.Entities.Enums;
 using MarrowVale.Common;
-using MarrowVale.Common.Contracts;
 using MarrowVale.Data.Contracts;
-using Neo4jClient;
-using System;
+using MarrowVale.Common.Contracts;
 using System.Collections.Generic;
+using Neo4jClient;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,18 +15,16 @@ namespace MarrowVale.Business.Services
     public class DialogueService : IDialogueService
     {
         private readonly IAiService _aiService;
-        private readonly IGraphClient _graphClient;
         private readonly IPromptService _promptService;
         private readonly IPrintService _printService;
         private readonly INpcRepository _npcRepository;
         private readonly IWorldContextService _worldContextService;
         private readonly INpcActionService _npcActionService;
-
-        public DialogueService(IAiService aiService, IGraphClient graphClient, IPromptService promptService, IPrintService printService, INpcRepository npcRepository,
+        
+        public DialogueService(IAiService aiService, IPromptService promptService, IPrintService printService, INpcRepository npcRepository,
                                 IWorldContextService worldContextService, INpcActionService npcActionService)
         {
             _aiService = aiService;
-            _graphClient = graphClient;
             _promptService = promptService;
             _printService = printService;
             _npcRepository = npcRepository;
@@ -35,140 +32,117 @@ namespace MarrowVale.Business.Services
             _npcActionService = npcActionService;
         }
 
-        public void Talk(Player player, Npc npc)
+        public async Task Converse(Player player, Npc npc)
         {
-            npc = _npcRepository.GetById(npc.Id).Result;
-            var conversation = new StringBuilder();
+            npc = await _npcRepository.GetById(npc.Id);
+            var transcript = new StringBuilder();
+            IReadOnlyList<ChatTurn> conversation = null;
             bool conversationEnded = false;
             _printService.Print("");
 
             while (!conversationEnded)
             {
                 var playerText = _printService.ReadDialogue(player);
-                conversation.Append($"Player:{playerText}");
+                if (playerText == null) return;
+                transcript.Append($"Player:{playerText}");
 
-                var responseType = DetermineReponseType(playerText);
-
+                var responseType = await DetermineResponseType(playerText);
 
                 if (responseType == DialogueResopnseTypeEnum.Purchase)
                 {
-                    _npcActionService.PurchaseItem(npc, player, playerText);
+                    await _npcActionService.PurchaseItem(npc, player, playerText);
                     break;
                 }
 
                 if (responseType == DialogueResopnseTypeEnum.Sell)
                 {
-                    _npcActionService.SellItem(npc, player, playerText);
+                    await _npcActionService.SellItem(npc, player, playerText);
                     break;
                 }
 
-                string response;
-                if (responseType == DialogueResopnseTypeEnum.Answer)
-                    response = respondToPlayer(conversation.ToString(), npc, responseType);
-                else
-                    response = respondToPlayer(conversation.ToString(), npc, responseType);
+                (conversation, var response) = await RespondToPlayer(player, playerText, npc, responseType, conversation);
 
                 if (responseType == DialogueResopnseTypeEnum.Farewell)
                     conversationEnded = true;
 
-                conversation.AppendNewLine("");
-                conversation.AppendNewLine($"{npc.FullName}:{response}");
+                transcript.AppendNewLine(string.Empty);
+                transcript.AppendNewLine($"{npc.FullName}:{response}");
                 _printService.PrintDialogueResponse(npc, response);
             }
 
-            var summary = summarizeConverstion(conversation.ToString(), npc);
-            _npcRepository.CreateMemory(npc, summary);
+            var summary = await SummarizeConversation(transcript.ToString());
+            await _npcRepository.CreateMemory(npc, player, summary);
         }
 
-        private DialogueResopnseTypeEnum DetermineReponseType(string text)
+        private async Task<DialogueResopnseTypeEnum> DetermineResponseType(string text)
         {
             var prompt = _promptService.GenerateDialogueIntentPrompt(text, DialogueTypeEnum.InterpretIntent);
-            var responseType = _aiService.Complete(prompt).Result?.Trim()?.ToUpper();
+            var responseType = (await _aiService.Complete(prompt))?.Trim()?.ToUpper();
 
-            if (responseType == DialogueResopnseTypeEnum.Question.ToString().ToUpper())
-                return DialogueResopnseTypeEnum.Answer;
-            else if (responseType == DialogueResopnseTypeEnum.Introduction.ToString().ToUpper())
-                return DialogueResopnseTypeEnum.Introduction;
-            else if (responseType == DialogueResopnseTypeEnum.Statement.ToString().ToUpper())
-                return DialogueResopnseTypeEnum.Statement;
-            else if (responseType == DialogueResopnseTypeEnum.Farewell.ToString().ToUpper())
-                return DialogueResopnseTypeEnum.Farewell;
-            else if (responseType == DialogueResopnseTypeEnum.Attack.ToString().ToUpper())
-                return DialogueResopnseTypeEnum.Attack;
-            else if (responseType == DialogueResopnseTypeEnum.Purchase.ToString().ToUpper())
-                return DialogueResopnseTypeEnum.Purchase;
-            else if (responseType == DialogueResopnseTypeEnum.Sell.ToString().ToUpper())
-                return DialogueResopnseTypeEnum.Sell;
-            else if (responseType == DialogueResopnseTypeEnum.Give.ToString().ToUpper())
-                return DialogueResopnseTypeEnum.Give;
-            else
-                return DialogueResopnseTypeEnum.Confused;
+            return responseType switch
+            {
+                var res when IsResponseOfType(res, DialogueResopnseTypeEnum.Question) => DialogueResopnseTypeEnum.Answer,
+                var res when IsResponseOfType(res, DialogueResopnseTypeEnum.Introduction) => DialogueResopnseTypeEnum.Introduction,
+                var res when IsResponseOfType(res, DialogueResopnseTypeEnum.Statement) => DialogueResopnseTypeEnum.Statement,
+                var res when IsResponseOfType(res, DialogueResopnseTypeEnum.Farewell) => DialogueResopnseTypeEnum.Farewell,
+                var res when IsResponseOfType(res, DialogueResopnseTypeEnum.Attack) => DialogueResopnseTypeEnum.Attack,
+                var res when IsResponseOfType(res, DialogueResopnseTypeEnum.Purchase) => DialogueResopnseTypeEnum.Purchase,
+                var res when IsResponseOfType(res, DialogueResopnseTypeEnum.Sell) => DialogueResopnseTypeEnum.Sell,
+
+                _ => DialogueResopnseTypeEnum.Confused
+            };
         }
 
-
-
-        private string respondToPlayer(string conversation, Npc c, DialogueResopnseTypeEnum responseType)
+        private bool IsResponseOfType(string responseType, DialogueResopnseTypeEnum dialogueResponseType)
         {
-            var context = generateContext(conversation, c, responseType);
-            var character = _graphClient.Cypher
-                                .Match("(character:Character)")
-                                .Where((Npc character) => character.Name == c.Name)
-                                .Return(character => character.As<Npc>())
-                                .ResultsAsync.Result.FirstOrDefault();
+            return responseType == dialogueResponseType.ToString().ToUpper();
+        }
 
-            StringBuilder input = new StringBuilder();
-            input.AppendNewLine($"{character.FullName} is a {character.Sentiment.ToString()} {character.Race.ToString()} {character.Occupation.ToString()}.  {context}");
-            input.Append(conversation);
+
+        private async Task<(IReadOnlyList<ChatTurn> conversation, string response)> RespondToPlayer(Player player, string playerText, Npc npc, DialogueResopnseTypeEnum responseType, IReadOnlyList<ChatTurn> currentConversation)
+        {
+            var context = await generateContext(player, playerText, npc, responseType);
+            var character = npc;
+            var input = new StringBuilder();
+            input.AppendNewLine($"{character.FullName} is a {character.Sentiment} {character.Race} {character.Occupation}.  {context}");
+
             var dialoguePrompt = _promptService.GenerateDialoguePrompt(input.ToString(), responseType, $"{character.FullName}:");
+            var systemMessage = dialoguePrompt.ToString();
 
-            return _aiService.Complete(dialoguePrompt).Result;
+            (currentConversation, var response) = await _aiService.SendChat(playerText, systemMessage, currentConversation, responseType.ToString());
+
+            return (currentConversation, response);
 
         }
 
-        private string summarizeConverstion(string conversation, Npc Character)
+        private Task<string> SummarizeConversation(string conversation)
         {
             var summary = _promptService.GenerateDialogueSummaryPrompt(conversation);
-            return _aiService.Complete(summary).Result;
+            return _aiService.Complete(summary);
         }
 
-        private string memoryOfPlayer(Npc c)
+        private async Task<string> memoryOfPlayer(Npc c, Player player)
         {
-            var conversation = _npcRepository.MemoryofPlayer(c);
+            var conversation = await _npcRepository.MemoryofPlayer(c, player);
             return conversation != null ? $"In their last conversation {conversation.Summary}" : null;
         }
 
-        private string generateContext(string conversation, Npc character, DialogueResopnseTypeEnum responseType)
+        private async Task<string> generateContext(Player player, string conversation, Npc character, DialogueResopnseTypeEnum responseType)
         {
-            var characterKnowledge = _npcRepository.AllKnowledge(character);
-            var triggeredMemory =_worldContextService.ContextSearch(conversation, characterKnowledge);
+            if (responseType == DialogueResopnseTypeEnum.Introduction)
+            {
+                var memory = await memoryOfPlayer(character, player);
+                if (memory != null) return memory;
+            }
+            var characterKnowledge = await _npcRepository.AllKnowledge(character);
+            var triggeredMemory = await _worldContextService.ContextSearch(conversation, characterKnowledge);
 
             if (triggeredMemory != null)
             {
-                var memoryContext = $"{character.Name} {triggeredMemory?.RelationshipLabel?.FirstOrDefault()} ";
-                memoryContext = memoryContext + string.Join(", ",triggeredMemory.Relations.Select(x => x.Node.Name));
-                 
-                return memoryContext;
+                return $"{triggeredMemory.Name}: {triggeredMemory.Description}";
             }
-
-
             if (responseType == DialogueResopnseTypeEnum.Introduction)
-                return memoryOfPlayer(character) ?? character.Objective;
-            else if (responseType == DialogueResopnseTypeEnum.Farewell)
-            { 
-            
-            }
-            else if (responseType == DialogueResopnseTypeEnum.Statement)
-            {
-
-            }
-            else if (responseType == DialogueResopnseTypeEnum.Attack)
-            {
-
-            }
-            else if (responseType == DialogueResopnseTypeEnum.Confused)
-            {
-
-            }
+                return character.Objective;
 
             return null;
         }

@@ -1,4 +1,5 @@
-﻿using MarrowVale.Business.Contracts;
+﻿using System.Threading.Tasks;
+using MarrowVale.Business.Contracts;
 using MarrowVale.Business.Entities.Dtos;
 using MarrowVale.Business.Entities.Entities;
 using MarrowVale.Business.Entities.Enums;
@@ -37,12 +38,12 @@ namespace MarrowVale.Business.Services
             _appSettingsProvider = appSettingsProvider;
         }
 
-        public Player NewCharacter()
+        public async Task<Player> NewCharacter()
         {
-            if (_playerRepository.All().Result.Count() == 10)
+            if ((await _playerRepository.All()).Count() == 10)
             {
                 _printService.Type("There are too many saves, you need to delete one to cotinue with your creation.");
-                pickPlayerToRemove();
+                await pickPlayerToRemove();
             }
 
             _printService.ClearConsole();
@@ -54,14 +55,14 @@ namespace MarrowVale.Business.Services
 
             pickRace(playerDto);
             pickGender(playerDto);
-            pickName(playerDto);           
+            await pickName(playerDto);
             pickClass(playerDto);
 
             var startingClass = _classRepository.GetClass(playerDto.Class);
 
             var player = new Player(playerDto);
             loadNewInventory(startingClass, player);
-            _playerRepository.CreatePlayer(player).Wait();
+            await _playerRepository.CreatePlayer(player);
 
             Console.WriteLine($"{Environment.NewLine}Name: {playerDto.Name}");
             Console.WriteLine($"Gender: {playerDto.Gender}");
@@ -71,9 +72,9 @@ namespace MarrowVale.Business.Services
             return player;
         }
 
-        public Player LoadCharacter()
+        public async Task<Player> LoadCharacter()
         {
-            var players = _playerRepository.All().Result.ToList();
+            var players = (await _playerRepository.All()).ToList();
             displaySavedCharacters(players);
 
             _printService.Type("Enter the name of the player you would like to play.");
@@ -85,39 +86,40 @@ namespace MarrowVale.Business.Services
             {
                 _printService.Print($"No player with name {name} exists.");
                 Thread.Sleep(2000);
-                return LoadCharacter();
+                return await LoadCharacter();
             }
             else
             {
-                player = _playerRepository.GetPlayerWithInventory(player.Id);
+                player = await _playerRepository.GetPlayerWithInventory(player.Id);
                 player.LastSaveDateTime = DateTime.Now;
                 return player;
             }
         }
 
-        public Inventory GetInventory(Player player)
+        public async Task<Inventory> GetInventory(Player player)
         {            
-            return _playerRepository.GetInventory(player);
+            return await _playerRepository.GetInventory(player);
         }
         
-        private void pickPlayerToRemove()
+        private async Task pickPlayerToRemove()
         {
-            var players = _playerRepository.All().Result.ToList();
+            var players = (await _playerRepository.All()).ToList();
             displaySavedCharacters(players);
 
             _printService.Type("Enter the name of the player you would like to delete.");
 
             var name = _globalItemsProvider.UpperFirstChar(_printService.ReadInput());
-            var player = _playerRepository.Single(x => x.Name == name).Result;
+            var player = await _playerRepository.Single(x => x.Name == name);
 
             if (player == null)
             {
                 _printService.Print($"No player with name {name} exists.");
                 Thread.Sleep(2000);
-                pickPlayerToRemove();
+                await pickPlayerToRemove();
+                return;
             }
 
-            _playerRepository.Delete(x => x.Id == player.Id);
+            await _playerRepository.Delete(x => x.Id == player.Id);
         }
 
         private void displaySavedCharacters(IList<Player> players)
@@ -132,7 +134,7 @@ namespace MarrowVale.Business.Services
             }
         }
 
-        private void pickName(PlayerDto playerDto)
+        private async Task pickName(PlayerDto playerDto)
         {
             var characterName = _drawingRepository.GetCharacterCreationStateArt(PlayerCreationStateEnum.Name);
 
@@ -144,13 +146,14 @@ namespace MarrowVale.Business.Services
 
             var name = _globalItemsProvider.UpperFirstChar(_printService.ReadInput());
 
-            var newName = _playerRepository.Single(x => x.Name.ToUpper() == name.ToUpper()).Result;
+            var newName = await _playerRepository.Single(x => x.Name.ToUpper() == name.ToUpper());
 
             if (newName != null)
             {
                 _printService.Print("That name is already taken. Pick a new name.");
                 Thread.Sleep(2000);
-                pickName(playerDto);
+                await pickName(playerDto);
+                return;
             }
 
             var choiceMade = false;
@@ -168,7 +171,7 @@ namespace MarrowVale.Business.Services
                 }
                 else if (choice.ToUpper() == "NO")
                 {
-                    pickName(playerDto);
+                    await pickName(playerDto);
                     choiceMade = true;
                 }
                 else

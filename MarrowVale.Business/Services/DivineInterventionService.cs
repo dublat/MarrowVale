@@ -1,4 +1,5 @@
-﻿using MarrowVale.Business.Contracts;
+﻿using System.Threading.Tasks;
+using MarrowVale.Business.Contracts;
 using MarrowVale.Business.Entities.Commands;
 using MarrowVale.Business.Entities.Entities;
 using MarrowVale.Business.Entities.Enums;
@@ -32,7 +33,7 @@ namespace MarrowVale.Business.Services
             _deityRepository = deityRepository;
         }
 
-        public string HandleError(string context, string input, string error)
+        public async Task<string> HandleError(string input, string error, string context = null)
         {
             var promptInput = new StringBuilder();
             promptInput.AppendNewLine($"Action: {input}");
@@ -40,13 +41,13 @@ namespace MarrowVale.Business.Services
 
             var divinePrompt = _promptService.GenerateDivineText(promptInput.ToString());
             var divineResponse = _aiService.Complete(divinePrompt);
-            return divineResponse.Result;
+            return await divineResponse;
         }
 
-        public string Smite(Npc character, Deity deity = null, string requestedAction = null)
+        public async Task<string> Smite(Npc character, Deity deity = null, string requestedAction = null)
         {
             if (deity?.Name == null)
-                deity = _deityRepository.DefaultDeity();
+                deity = await _deityRepository.DefaultDeity();
 
 
             var promptInput = new StringBuilder();
@@ -54,7 +55,7 @@ namespace MarrowVale.Business.Services
             promptInput.AppendNewLine($"Character: {character.FullName}");
 
             var divinePrompt = _promptService.GenerateSmiteText(promptInput.ToString());
-            var divineResponse = _aiService.Complete(divinePrompt).Result;
+            var divineResponse = await _aiService.Complete(divinePrompt);
 
             _printService.PrintDivineText(divineResponse);
 

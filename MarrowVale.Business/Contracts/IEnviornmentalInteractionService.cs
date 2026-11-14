@@ -10,14 +10,14 @@ namespace MarrowVale.Business.Contracts
 {
     public interface IEnviornmentalInteractionService
     {
-        public MarrowValeMessage PickUpItem(Command command, Player player);
-        public MarrowValeMessage DropItem(Command command, Player player);
+        public Task<MarrowValeMessage> PickUpItem(Command command, Player player);
+        public Task<MarrowValeMessage> DropItem(Command command, Player player);
         public MarrowValeMessage AttackObject(Command command, Player player);
-        public MarrowValeMessage OpenDoor(Player player, Command command);
-        public MarrowValeMessage CloseDoor(Player player, Command command);
+        public Task<MarrowValeMessage> OpenDoor(Player player, Command command);
+        public Task<MarrowValeMessage> CloseDoor(Player player, Command command);
         public MarrowValeMessage BreakDoor(Player player, Command command);
-        public MarrowValeMessage UnlockDoor(Player player, Command command);
-        public MarrowValeMessage LockDoor(Player player, Command command);
+        public Task<MarrowValeMessage> UnlockDoor(Player player, Command command);
+        public Task<MarrowValeMessage> LockDoor(Player player, Command command);
 
 
     }

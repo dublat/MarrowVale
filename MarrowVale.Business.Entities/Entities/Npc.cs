@@ -1,6 +1,5 @@
 ﻿using MarrowVale.Business.Entities.Enums;
 using Newtonsoft.Json;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -41,6 +40,8 @@ namespace MarrowVale.Business.Entities.Entities
         public bool IsAlive { get; set; }
         public string Gender { get; set; }
         public decimal FeelingTowardsPlayer { get; set; }
+        public List<string> ActivityHistory { get; set; }
+        public string CurrentActivity { get; set; }
         public NpcTypeEnum Type { get; private set; }
 
 
@@ -98,19 +99,33 @@ namespace MarrowVale.Business.Entities.Entities
             Visible = false;
         }
 
-        public StringBuilder DescriptionPromptInput()
+        public override string DescriptionPromptInput()
         {
             var input = new StringBuilder();
             //TODO: Give info based on vision/knowledge
-            if (true)
+            var isFamiliar = false;
+            if (isFamiliar)
             {
-                input.Append($"Known Person: {FullName}\n");
-                //input.Append($"Personality: {Sentiment.ToString()}\n");
-                //input.Append($"Race: {Race.ToString()}\n");
-                //input.Append($"Occupation: {Occupation.ToString()}\n");
-                return input;
+                input.Append($"{FullName}");
+                if (!string.IsNullOrEmpty(CurrentActivity))
+                {
+                    input.Append($" - They are {CurrentActivity.ToLower()}.\n");
+                }
+                return input.ToString();
             }
+
+            input.Append($"You see a {Gender.ToLower()} {Race.ToString().ToLower()} named {FullName} who looks to be about {Age} years old.\n");
+            input.Append($"They appear to be a {Occupation.ToString().ToLower()}.\n");
+            input.Append($"They seem to be feeling {Sentiment.ToString().ToLower()} towards you.\n");
+            if (!string.IsNullOrEmpty(CurrentActivity))
+            {
+                input.Append($" - They are {CurrentActivity.ToLower()}.\n");
+            }
+
+            return input.ToString();    
         }
+
+
 
         public string CombatDescription()
         {

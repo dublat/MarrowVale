@@ -14,11 +14,13 @@ namespace MarrowVale.Business.Services
         private readonly IGlobalItemsProvider _globalItemsProvider;
         private readonly IAppSettingsProvider _appSettingsProvider;
         private readonly int _typeSpeed;
+        private readonly CancellationToken _cancellation;
 
-        public PrintService(IGlobalItemsProvider globalItemsProvider, IAppSettingsProvider appSettingsProvider)
+        public PrintService(IGlobalItemsProvider globalItemsProvider, IAppSettingsProvider appSettingsProvider, CancellationToken cancellation = default)
         {
             _globalItemsProvider = globalItemsProvider;
             _appSettingsProvider = appSettingsProvider;
+            _cancellation = cancellation;
             _typeSpeed = _appSettingsProvider.TypeSpeed;
         }
 
@@ -30,8 +32,9 @@ namespace MarrowVale.Business.Services
 
         public void PrintCentered(string line)
         {
-            Console.WindowWidth = _globalItemsProvider.WindowWidth;
-            Console.SetCursorPosition((Console.WindowWidth - line.Length) / 2, Console.CursorTop);
+            if (OperatingSystem.IsWindows() && !Console.IsOutputRedirected) Console.WindowWidth = _globalItemsProvider.WindowWidth;
+            if (!Console.IsOutputRedirected)
+                Console.SetCursorPosition(Math.Max(0, (Console.WindowWidth - line.Length) / 2), Console.CursorTop);
             Console.WriteLine(line);
         }
 
@@ -62,8 +65,9 @@ namespace MarrowVale.Business.Services
         {
             Thread.Sleep(milliSeconds);
 
-            Console.WindowWidth = _globalItemsProvider.WindowWidth;
-            Console.SetCursorPosition((Console.WindowWidth - line.Length) / 2, Console.CursorTop);
+            if (OperatingSystem.IsWindows() && !Console.IsOutputRedirected) Console.WindowWidth = _globalItemsProvider.WindowWidth;
+            if (!Console.IsOutputRedirected)
+                Console.SetCursorPosition(Math.Max(0, (Console.WindowWidth - line.Length) / 2), Console.CursorTop);
             Console.WriteLine(line);
         }
 
@@ -71,8 +75,9 @@ namespace MarrowVale.Business.Services
         {
             Thread.Sleep(milliSeconds);
 
-            Console.WindowWidth = _globalItemsProvider.WindowWidth;
-            Console.SetCursorPosition((Console.WindowWidth - line.Length) / 2, Console.CursorTop);
+            if (OperatingSystem.IsWindows() && !Console.IsOutputRedirected) Console.WindowWidth = _globalItemsProvider.WindowWidth;
+            if (!Console.IsOutputRedirected)
+                Console.SetCursorPosition(Math.Max(0, (Console.WindowWidth - line.Length) / 2), Console.CursorTop);
 
             foreach (var letter in line)
             {
@@ -87,19 +92,27 @@ namespace MarrowVale.Business.Services
         {
             Console.Write(">");
             //TODO Add Sanitation Logic
-            return Console.ReadLine();
+            return ReadLine();
+        }
+
+        private string ReadLine()
+        {
+            _cancellation.ThrowIfCancellationRequested();
+            // Console.In reads synchronously on Windows. A cancelled session exits the game.
+            return System.Threading.Tasks.Task.Run(Console.ReadLine, _cancellation)
+                .WaitAsync(_cancellation).GetAwaiter().GetResult();
         }
 
         public void ClearConsole()
         {
-            Console.Clear();
+            if (!Console.IsOutputRedirected) Console.Clear();
         }
 
         public string ReadDialogue(Player player)
         {
             Console.Write($"{player.Name}: ");
             //TODO Add Sanitation Logic
-            return Console.ReadLine().Replace("\n", "").Replace("\r", "");
+            return ReadLine()?.Replace("\n", "").Replace("\r", "");
         }
 
         public void PrintDialogueResponse(Npc npc, string response)

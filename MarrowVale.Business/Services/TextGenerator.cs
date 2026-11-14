@@ -20,7 +20,7 @@ namespace MarrowVale.Business.Services
             _aiService = aiService;
         }
 
-        public string GenerateCharacterDescription(Npc person)
+        public async Task<string> GenerateCharacterDescription(Npc person)
         {
             StringBuilder sb = new StringBuilder();
             sb.AppendNewLine("This generates a random description off a character based off gender and occupation");
@@ -28,17 +28,17 @@ namespace MarrowVale.Business.Services
             sb.AppendNewLine($"Gender:{person.Gender}");
             sb.AppendNewLine($"Occupation:{person.Occupation}");
             sb.AppendNewLine($"Description:");
-            return _aiService.Complete(sb.ToString()).Result;
+            return await _aiService.Complete(sb.ToString());
         }
 
-        public string GenerateCharacterName(Npc person)
+        public async Task<string> GenerateCharacterName(Npc person)
         {
             StringBuilder sb = new StringBuilder();
             sb.AppendNewLine("This generates a name based off race and gender");
             sb.AppendNewLine($"Race:{person.Race.ToString()}");
             sb.AppendNewLine($"Gender:{person.Gender}");
             sb.Append($"Name:");
-            return _aiService.Complete(sb.ToString()).Result;
+            return await _aiService.Complete(sb.ToString());
         }
 
         public string GenerateCityDescription()

@@ -19,6 +19,8 @@ namespace MarrowVale.Common.Contracts
         int MainMenuWait { get; }  
         int CharacterCreateWait { get; }
         int TypeSpeed { get; }
+        string ChatModel { get; }
+        string EmbeddingModel { get; }
         string OpenAiKey { get; }
         string Neo4jUser { get; }
         string Neo4jPassword { get; }
